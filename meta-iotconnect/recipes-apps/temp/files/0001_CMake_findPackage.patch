@@ -1,0 +1,24 @@
+diff --git a/iotc-generic-c-sdk/CMakeLists.txt b/iotc-generic-c-sdk/CMakeLists.txt
+index a3d45c0..17d38c3 100644
+--- a/iotc-generic-c-sdk/CMakeLists.txt
++++ b/iotc-generic-c-sdk/CMakeLists.txt
+@@ -84,15 +84,7 @@ ELSE ()
+     )
+ ENDIF ()
+ 
+-
+-IF (CMAKE_TOOLCHAIN_FILE)
+-    # not the best way to detect VCPKG, but we'll go with that
+-    find_package(CURL CONFIG REQUIRED)
+-ELSE ()
+-    find_package(CURL REQUIRED)
+-ENDIF()
+-
+-target_link_libraries(iotc-c-generic-sdk CURL::libcurl)
++target_link_libraries(iotc-c-generic-sdk ${PC_CURL_LIBRARY_DIRS}/libcurl.so)
+ 
+ target_link_libraries(iotc-c-generic-sdk cjson)
+ 
+-- 
+2.25.1
+
