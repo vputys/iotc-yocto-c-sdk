@@ -9,48 +9,44 @@ inherit cmake
 DEPENDS += " curl"
 DEPENDS += " pkgconfig"
 DEPENDS += " openssl"
-DEPENDS += " util-linux-libuuid"
+DEPENDS += " util-linux"
 
 # Where to keep downloaded source files (in tmp/work/...)
 C="${WORKDIR}/git"
 S="${C}/samples/basic-sample"
 
 SRCREV_FORMAT="machine_meta"
+SRCREV="${AUTOREV}"
 
 # Where to find source files (can be local, GitHub, etc.)
 SRC_URI = "git://github.com/avnet-iotconnect/iotc-generic-c-sdk.git;\
 protocol=https;\
 branch=main;\
 destsuffix=${C};\
-rev=3cb38db05b2889562773e48b65527c389acefecb\
 "
 
 SRC_URI += "gitsm://github.com/DaveGamble/cJSON.git;\
 protocol=https;\
 branch=master;\
 destsuffix=${C}/lib/cJSON/;\
-rev=324a6ac9a9b285ff7a5a3e5b2071e3624b94f2db;\
 "
 
 SRC_URI += "gitsm://github.com/avnet-iotconnect/iotc-c-lib.git;\
 protocol=https;\
 branch=master;\
 destsuffix=${C}/lib/iotc-c-lib/;\
-rev=5c5e98144651a0a9b856944ce967b2073c36b19a;\
 "
 
 SRC_URI += "gitsm://github.com/Azure/azure-iot-sdk-c.git;\
 protocol=https;\
 branch=main;\
 destsuffix=${C}/lib/azure-iot-sdk-c/;\
-rev=80d4e13ce7cdc3ef1751848e649d653d485f8412;\
 "
 
 SRC_URI += "gitsm://github.com/eclipse/paho.mqtt.c.git;\
 protocol=https;\
 branch=master;\
 destsuffix=${C}/lib/paho.mqtt.c/;\
-rev=3b7ae6348bc917d42c04efa962e4868c09bbde9f;\
 "
 
 SRC_URI += "file://0001_CMake_findPackage.patch;\
