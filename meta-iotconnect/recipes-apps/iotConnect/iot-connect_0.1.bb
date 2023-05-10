@@ -1,3 +1,4 @@
+
 #based on https://www.digikey.co.uk/en/maker/projects/intro-to-embedded-linux-part-6-add-custom-application-to-yocto-build/509191cec6c2418d88fd374f93ea5dda
 SUMMARY = "Compile and install the basic-sample from the IoT Connect C SDK"
 DESCRIPTION = "this recipe pulls the C SDK from the IoT Connect git repos; Sets up the basic-sample as the target to be built using CMake and then installed into the image."
@@ -52,11 +53,6 @@ destsuffix=${C}/lib/paho.mqtt.c/;\
 SRC_URI += "file://0001_CMake_findPackage.patch;\
 patchdir=${C};\
 "
-
-SRC_URI += "file://0002-app-config.patch;\
-patchdir=${C};\
-"
-
 cmake_do_generate_toolchain_file_append() {
 	cat >> ${WORKDIR}/toolchain.cmake <<EOF
 $cmake_crosscompiling

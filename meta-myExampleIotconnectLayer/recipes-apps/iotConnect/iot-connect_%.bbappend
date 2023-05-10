@@ -1,6 +1,5 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS_prepend := "${THISDIR}:"
 
-TARGET_CFLAGS += " -DIOTCONNECT_CPID='\"avtds\"' "
-TARGET_CFLAGS += " -DIOTCONNECT_ENV='\"avnetpoc\"' "
-TARGET_CFLAGS += " -DIOTCONNECT_DUID='\"linuxDemo\"' "
-TARGET_CFLAGS += " -DIOTCONNECT_SYMMETRIC_KEY='\"MDEyMzQ1Njc4OWFiY2RlZg==\"' "
+SRC_URI += "file://app_config.h;\
+subdir=${S}/config;\
+"
