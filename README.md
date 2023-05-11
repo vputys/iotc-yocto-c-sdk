@@ -1,6 +1,6 @@
 # IoT-Connect Yocto Integration
 
-*The following details yocto layers designed to integrate the IoT-Connect C SDK. The end result is a compiled version of the `basic-sample` app provided in the C SDK repo that is installed to an image target. Once said image is flashed to a target, the basic-sample app should successfully run & establish comms with an appropriately setup https://avnet.iotconnect.io/*
+*The following details yocto layers designed to integrate the [IoT-Connect C SDK](https://github.com/avnet-iotconnect/iotc-generic-c-sdk). The end result is a compiled version of the `basic-sample` app provided in the C SDK repo that is installed to an image target. Once said image is flashed to a target, the basic-sample app should successfully run & establish comms with an appropriately setup https://avnet.iotconnect.io/*
 
 ## Layers
 There are 2 layers thus far: `meta-iotconnect` & `meta-myExampleIotconnectLayer`.
