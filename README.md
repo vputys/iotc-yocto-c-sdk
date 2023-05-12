@@ -65,7 +65,49 @@ It's expected that developers will have to provide bespoke elements for their ap
  ## MaaxBoard Example
  
  Based on [this quickstart guide](https://www.avnet.com/wps/wcm/connect/onesite/35645cc9-4317-4ca0-a2fa-30cce5f9ff17/MaaXBoard-Mini-Linux-Yocto-Lite-Development_Guide-V1.0-EN.pdf?MOD=AJPERES) from [this page](https://www.avnet.com/wps/portal/us/products/avnet-boards/avnet-board-families/maaxboard/maaxboard?utm_source=hackster)
- 
+   
+<details>
+   <summary>Quickstart</summary>
+   
+   1. Setup your build environment if you haven't already
+   
+      ```
+      sudo apt update && \
+      sudo apt install -y gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential \
+      chrpath socat libsdl1.2-dev xterm sed cvs subversion coreutils texi2html docbook-utils \
+      python-pysqlite2 help2man make gcc g++ desktop-file-utils libgl1-mesa-dev libglu1-mesa-dev \
+      mercurial autoconf automake groff curl lzop asciidoc u-boot-tools cpio sudo locales && \
+      curl https://storage.googleapis.com/git-repo-downloads/repo > ./repo && \
+      chmod a+x repo && \
+      sudo mv repo /usr/bin/
+      ```
+   
+   1. cut & paste the below into your working directory
+      
+       ```
+       mkdir -p imx-yocto-bsp && \
+       cd imx-yocto-bsp && \
+       repo init -u https://github.com/nxp-imx/imx-manifest  -b imx-linux-hardknott -m imx-5.10.35-2.0.0.xml && \
+       repo sync && \
+       git -C sources clone https://github.com/Avnet/meta-maaxboard.git -b hardknott && \
+       mkdir imx8mqevk && \
+       DISTRO=fsl-imx-wayland MACHINE=imx8mqevk source imx-setup-release.sh -b imx8mqevk && \
+       cd .. && rm -rf imx8mqevk && \
+       mkdir -p maaxboard/build && \
+       source sources/poky/oe-init-build-env maaxboard/build && \
+       cd ../../ && \
+       cp sources/meta-maaxboard/conf/local.conf.sample maaxboard/build/conf/local.conf && \
+       cp sources/meta-maaxboard/conf/bblayers.conf.sample maaxboard/build/conf/bblayers.conf && \
+       wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/main.zip && \
+       unzip main.zip -d sources/ && \
+       mv sources/iotc-yocto-c-sdk-main/meta-* sources/ && \
+       rm -r main.zip sources/iotc-yocto-c-sdk-main/ && \
+       echo -e '\nBBLAYERS += "${BSPDIR}/sources/meta-iotconnect"' >> maaxboard/build/conf/bblayers.conf && \
+       echo 'BBLAYERS += "${BSPDIR}/sources/meta-myExampleIotconnectLayer"' >> maaxboard/build/conf/bblayers.conf && \
+       bitbake iot-connect-image
+      ```
+</details>
+   
 1. Install required packages
    ```
    sudo apt update && \
