@@ -54,7 +54,7 @@ This was the docker run used in the first instance:
 
 - `docker run --privileged -t -i --dns <your networks gateway IP here>  --name msc-ldk -h docker -v `pwd`/src:/src msc-ldk /bin/bash`
 
-##### Seting up
+##### Setting up
 
 Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) in section 4.7 (Building Images Section)
 
