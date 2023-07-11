@@ -38,7 +38,7 @@ follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to est
 
 ### Building MSC LDK
 
-***IMPORTANT:*** do not use *"App_Note_030_Building_from_MSC_Git_V1_8"* as guide for building images. It provides information on building generic image and skips an important step mentioned in another document. However, iotc-yocto-c-sdk uses hardknot Yocto and generic MSC LDK uses kirkstone Yocto and require manual fixes to make them compatible. Please use *"msc-ldk-bsp-01047-v1.9.0-20220909"* to build images. If compatibility issues still appear - try `git checkout v1.9.0` before setting up the enviroment or building OR [look for manual fixes here](#tweaking-iotc-yocto-c-sdk-to-work-with-yocto-kirkstone).
+***IMPORTANT:*** do not use *"App_Note_030_Building_from_MSC_Git_V1_8"* as guide for building images. It provides information on building generic image and skips an important step mentioned in another document. Problem is - iotc-yocto-c-sdk uses hardknott Yocto and generic MSC LDK uses kirkstone Yocto and require manual fixes to make them compatible. Please use *"msc-ldk-bsp-01047-v1.9.0-20220909"* to build images. If compatibility issues still appear - do `git checkout v1.9.0` before setting up the enviroment or building OR [look for manual fixes here](#tweaking-iotc-yocto-c-sdk-to-work-with-yocto-kirkstone).
 
 ***Also note:*** *"msc-ldk-bsp-01047-v1.9.0-20220909"* document in Section 4.3 makes a typo. `git checkout 1.9.0` must be `git checkout v1.9.0`.
 
