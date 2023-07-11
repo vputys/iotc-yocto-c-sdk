@@ -20,4 +20,4 @@ Contains the git urls for checkouts, recipe definitions & a patch file for tempo
 #### meta-myExampleIotconnectLayer
 It's expected that developers will have to provide bespoke elements for their application. In the `basic-sample` example you're required to edit `app-config.h`. This layer provides an example of how a user might specify custom requirements of an application within their layer that's then compiled & built for use: in this case the `app-config.h` specifics.
 
-## Board specific examples can be found [here](board-specific_readmes/README.md)
+## Board specific examples can be found [here](board_specific_readmes/README.md)
