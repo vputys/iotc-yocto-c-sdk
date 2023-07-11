@@ -20,34 +20,131 @@ Contains the git urls for checkouts, recipe definitions & a patch file for tempo
 It's expected that developers will have to provide bespoke elements for their application. In the `basic-sample` example you're required to edit `app-config.h`. This layer provides an example of how a user might specify custom requirements of an application within their layer that's then compiled & built for use: in this case the `app-config.h` specifics.
 ## MSC LDK Example
 
-1. create an account on [embedded.avnet.com](https://embedded.avnet.com) 
+### Interaction with Avnet Embedded
 
-1. download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf"
+***Note***: Tested on docker image of Ubuntu 18.04 in combination with Ubuntu 22.04.
 
-1. follow instructions in said guide to establish the build enviroment. (Up to section 4.8 at the time of writing.) This was the docker rune used in the first instance:
-   ```
-   docker run --privileged -t -i --dns <your networks gateway IP here>  --name msc-ldk -h docker -v `pwd`/src:/src msc-ldk /bin/bash
-   ```
-   > *NB: you can exit the docker enviroment as you would any bash session with `exit`. Bear in mind that to re-enter the enviroment you'll need to call  the following;*
-   ```
-   docker stop msc-ldk && \
-   docker rm msc-ldk
-   ```
+- create an account on embedded.avnet.com
 
-1. Once the layers have been integrated as per the instructions above & recipe `iot-connect-image` has been built it can be flashed to the target using:
-   ```
-   sudo uuu -b emmc_burn_all.lst \
-   <path-to>/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
-   <path-to>/iot-connect-image-sm2s-imx8mp.wic
-   ```
-   where <path-to> might resolve as
-   ```
-   sudo uuu -b emmc_burn_all.lst \
-   ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
-   ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/iot-connect-image-sm2s-imx8mp.wic
-   ```
+- download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf")
 
-1. on the target (via serial debug or ssh terminal) execute `basic-sample`
+- - EDIT: list of documents you might need from https://embedded.avnet.com/product/msc-sm2s-imx8plus/
+
+- - - *MSC_SM2S-IMX8PLUS_Manual*
+- - - *msc-ldk-bsp-01047-v1.9.0-20220909*
+- - - *App_Note_035_Using_NXP_Mfgtool+uuu*
+- - - *App_Note_030_Building_from_MSC_Git_V1_8*
+- - - *MSC-SM2S-MB-EP5_User-Manual_DV3_V013* (can be found here: https://embedded.avnet.com/product/msc-sm2s-mb-ep5/#manual (also requires Avnet Embedded account for it))
+
+- - As soon as you get access to embedded.avnet.com find a document named *"msc-ldk-bsp-01047-v1.9.0-20220909"* and *"App_Note_030_Building_from_MSC_Git_V1_8"* and do the RSA SSH key bit mentioned in both documents then send it to address provided in those manuals along with the project code you want to work on (*msc_01047* for SM2S-IMX8PLUS). Do it ASAP too because it'll block you from downloading sm2s-imx8plus bsp and, thus, next steps.
+
+- - - - ***Note:*** Do these previous steps as soon as possible as they will be blocking you from continuing work.
+
+- follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to establish the build enviroment. (Up to section  4.7 "Building Images" (not including 4.7) at the time of writing.) 
+
+### Building MSC LDK
+
+#### Docker build
+
+##### Getting docker
+
+***Note:*** for this to work you might need to follow steps provided in Section 4.2 in *"msc-ldk-bsp-01047-v1.9.0-20220909"* document (Section "Setup Optional Docker Container") or combinating native build with your own Dockerfile.
+
+This was the docker run used in the first instance:
+
+- `docker run --privileged -t -i --dns <your networks gateway IP here>  --name msc-ldk -h docker -v `pwd`/src:/src msc-ldk /bin/bash`
+
+##### Seting up
+
+Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"* or *"App_Note_030_Building_from_MSC_Git_V1_8"*) in section 4.7 (Building Images in *"msc-ldk-bsp-01047-v1.9.0-20220909"* or section 3.5 in *"App_Note_030_Building_from_MSC_Git_V1_8*").
+
+Building will take a while and at the end you will get a lot of built images. Make sure imx-boot-sm2s-imx8mp-sd.bin-flash_evk is built.
+
+##### Exiting and stopping docker
+
+- - NB: you can exit the docker enviroment as you would any bash session with exit. Bear in mind that to re-enter the enviroment you'll need to call the following;
+
+```
+    docker stop msc-ldk && \
+    docker rm msc-ldk
+```
+
+If you didn't change strings following `-v` option in the docker command above you should find cloned directories and built images (`build/01047/tmp/deploy/images/sm2s-imx8mp/`) under src directory in your current directory.
+
+
+#### Native build
+
+Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"* or *"App_Note_030_Building_from_MSC_Git_V1_8"*) in section 4.7 (Building Images in *"msc-ldk-bsp-01047-v1.9.0-20220909"* or section 3.5 in *"App_Note_030_Building_from_MSC_Git_V1_8"*).
+
+Building will take a while and at the end you will get a lot of built images. Make sure `imx-boot-sm2s-imx8mp-sd.bin-flash_evk` is built.
+
+### Building `iot-connect-image` for sm2s-imx8mp
+
+clone iotc-yocto-c-sdk into `<basedir>/source`.
+
+Add both layers from iotc-yocto-c-sdk to the `bblayers.conf` file located in `build/01047/conf`
+
+#### Tweaking iotc-yocto-c-sdk to work with yocto kirkstone
+
+##### meta-iotconnect
+
+###### layer.conf
+
+in `meta-iotconnect/conf/layer.conf`:
+
+- change `LAYERSERIER_COMPAT_meta-iotconnect` to `LAYERSERIES_COMPAT_meta-iotconnect = "kirkstone"`
+
+###### iot-connect_%.bb
+
+in `meta-iotconnect/recipes-apps/iotConnect/iot-connect_0.1.bb` (v0.1 at the time of writing):
+
+- change `cmake_do_generate_toolchain_file_append()` to `cmake_do_generate_toolchain_file:append()`
+
+##### meta-myExampleIoTConnectLayer
+
+###### layer.conf
+
+in `meta-myExampleIoTConnectLayer/conf/layer.conf`:
+- change `LAYERSERIES_COMPAT_meta-myExampleIoTConnectLayer` to `LAYERSERIES_COMPAT_meta-myExampleIotconnectLayer = "kirkstone"`
+
+###### iot-connect_%.bbappend
+
+in `meta-myExampleIoTConnectLayer/recipes-apps/iotConnect/iot-connect_%.bbappen`:
+- change `FILESEXTRAPATHS_prepend := "${THISDIR}:"` to `FILESEXTRAPATHS:prepend := "${THISDIR}:"`
+
+#### Actually building iot-connect-image
+
+navigate to `build/01047` and use `bitbake iot-connect-image`
+
+After building make sure `iot-connect-image-sm2s-imx8mp.wic` is actually built
+
+### Flashing
+
+***Note:*** if build enviroment is not set up - head to base directory and run `source sources/yocto.git/oe-init-build-env build/01047`
+
+Once the layers have been integrated as per the instructions above & recipe iot-connect-image has been built it can be flashed to the target using:
+
+- ***NOTE:*** before flashing you need to see Section 6.16 (at the time of writing) Boot Options (Also see *"App_Note_035_Using_NXP_Mfgtool+uuu"* document Section 3.3 and further). It has information on what needs to be done to enable flashing via USB cable (you'll need to bridge 2 pins on the back of the board on board startup). In also contains information about DIP switches you might need to configure to enable right boot device (*"App_Note_035_Using_NXP_Mfgtool+uuu"* does not provide information on DIP switches so refer to *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* document Section 3.16 (Boot Selection) or *"MSC_SM2S-IMX8PLUS_Manual"* Section 6.16 (Boot Options)). 
+
+- ***Note:*** emmc_burn_all.lst and emmc_burn_loader.lst can be found in an Appendix section of *"App_Note_035_Using_NXP_Mfgtool+uuu"* document. files there contain some formatting as well as syntax problems not allowing to flash. However, they should be relatively easy to fix.
+
+    ```
+    sudo uuu -b emmc_burn_all.lst \
+    <path-to>/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
+    <path-to>/iot-connect-image-sm2s-imx8mp.wic
+    ```
+
+    where might resolve as
+
+    ```
+    sudo uuu -b emmc_burn_all.lst \
+    ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
+    ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/iot-connect-image-sm2s-imx8mp.wic
+    ```
+
+ - on the target (via serial debug or ssh terminal (for serial debug please see )) execute `basic-sample`
+
+
 
 ## If in doubt, you may need...
 
