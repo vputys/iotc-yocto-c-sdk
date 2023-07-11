@@ -1,4 +1,4 @@
-b# IoT-Connect Yocto Integration
+# IoT-Connect Yocto Integration
 
 *The following details yocto layers designed to integrate the [IoT-Connect C SDK](https://github.com/avnet-iotconnect/iotc-generic-c-sdk). The end result is a compiled version of the `basic-sample` app provided in the C SDK repo that is installed to an image target. Once said image is flashed to a target, the basic-sample app should successfully run & establish comms with an appropriately setup https://avnet.iotconnect.io/*
 
@@ -26,15 +26,9 @@ It's expected that developers will have to provide bespoke elements for their ap
 
 create an account on embedded.avnet.com
 
-download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf")
+download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf"). You might also need documents from https://embedded.avnet.com/product/msc-sm2s-imx8plus/
 
-***Note:*** list of documents you might need from https://embedded.avnet.com/product/msc-sm2s-imx8plus/
-
-- *MSC_SM2S-IMX8PLUS_Manual*
-- *msc-ldk-bsp-01047-v1.9.0-20220909*
-- *App_Note_035_Using_NXP_Mfgtool+uuu*
-- *App_Note_030_Building_from_MSC_Git_V1_8*
-- *MSC-SM2S-MB-EP5_User-Manual_DV3_V013* (can be found here: https://embedded.avnet.com/product/msc-sm2s-mb-ep5/#manual (also requires Avnet Embedded account for it))
+***Note:*** [List of useful documentation](#msc-ldk-documentation)
 
 As soon as you get access to embedded.avnet.com find a document named *"msc-ldk-bsp-01047-v1.9.0-20220909"* and *"App_Note_030_Building_from_MSC_Git_V1_8"* and do the RSA SSH key bit mentioned in both documents then send it to address provided in those manuals along with the project code you want to work on (*msc_01047* for SM2S-IMX8PLUS). Do it ASAP too because it'll block you from downloading sm2s-imx8plus bsp and, thus, next steps.
 
@@ -43,6 +37,11 @@ As soon as you get access to embedded.avnet.com find a document named *"msc-ldk-
 follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to establish the build enviroment. (Up to section  4.7 "Building Images" (not including 4.7) at the time of writing.) 
 
 ### Building MSC LDK
+
+***IMPORTANT:*** do not use *"App_Note_030_Building_from_MSC_Git_V1_8"* as guide for building images. It provides information on building generic image and skips an important step mentioned in another document. However, iotc-yocto-c-sdk uses hardknot Yocto and generic MSC LDK uses kirkstone Yocto and require manual fixes to make them compatible. Please use *"msc-ldk-bsp-01047-v1.9.0-20220909"* to build images. If compatibility issues still appear - try `git checkout v1.9.0` before setting up the enviroment or building OR [look for manual fixes here](#tweaking-iotc-yocto-c-sdk-to-work-with-yocto-kirkstone).
+
+***Also note:*** *"msc-ldk-bsp-01047-v1.9.0-20220909"* document in Section 4.3 makes a typo. `git checkout 1.9.0` must be `git checkout v1.9.0`.
+
 
 #### Docker build
 
@@ -56,9 +55,9 @@ This was the docker run used in the first instance:
 
 ##### Seting up
 
-Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"* or *"App_Note_030_Building_from_MSC_Git_V1_8"*) in section 4.7 (Building Images in *"msc-ldk-bsp-01047-v1.9.0-20220909"* or section 3.5 in *"App_Note_030_Building_from_MSC_Git_V1_8*").
+Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) in section 4.7 (Building Images Section)
 
-Building will take a while and at the end you will get a lot of built images. Make sure imx-boot-sm2s-imx8mp-sd.bin-flash_evk is built.
+Building will take a while and at the end you will get a lot of built images. Make sure `imx-boot-sm2s-imx8mp-sd.bin-flash_evk` is built.
 
 ##### Exiting and stopping docker
 
@@ -74,7 +73,7 @@ If you didn't change strings following `-v` option in the docker command above y
 
 #### Native build
 
-Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"* or *"App_Note_030_Building_from_MSC_Git_V1_8"*) in section 4.7 (Building Images in *"msc-ldk-bsp-01047-v1.9.0-20220909"* or section 3.5 in *"App_Note_030_Building_from_MSC_Git_V1_8"*).
+Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) in section 4.7 (Building Images Section)
 
 Building will take a while and at the end you will get a lot of built images. Make sure `imx-boot-sm2s-imx8mp-sd.bin-flash_evk` is built.
 
@@ -84,35 +83,7 @@ clone iotc-yocto-c-sdk into `<basedir>/source`.
 
 Add both layers from iotc-yocto-c-sdk to the `bblayers.conf` file located in `build/01047/conf`
 
-#### Tweaking iotc-yocto-c-sdk to work with yocto kirkstone
-
-##### meta-iotconnect
-
-###### layer.conf
-
-in `meta-iotconnect/conf/layer.conf`:
-
-- change `LAYERSERIER_COMPAT_meta-iotconnect` to `LAYERSERIES_COMPAT_meta-iotconnect = "kirkstone"`
-
-###### iot-connect_%.bb
-
-in `meta-iotconnect/recipes-apps/iotConnect/iot-connect_0.1.bb` (v0.1 at the time of writing):
-
-- change `cmake_do_generate_toolchain_file_append()` to `cmake_do_generate_toolchain_file:append()`
-
-##### meta-myExampleIoTConnectLayer
-
-###### layer.conf
-
-in `meta-myExampleIoTConnectLayer/conf/layer.conf`:
-- change `LAYERSERIES_COMPAT_meta-myExampleIoTConnectLayer` to `LAYERSERIES_COMPAT_meta-myExampleIotconnectLayer = "kirkstone"`
-
-###### iot-connect_%.bbappend
-
-in `meta-myExampleIoTConnectLayer/recipes-apps/iotConnect/iot-connect_%.bbappen`:
-- change `FILESEXTRAPATHS_prepend := "${THISDIR}:"` to `FILESEXTRAPATHS:prepend := "${THISDIR}:"`
-
-#### Actually building iot-connect-image
+***Note:*** ioct-yocto-c-sdk is based on hardknott version of Yocto. If kirkstone is required please look at [this section](#tweaking-iotc-yocto-c-sdk-to-work-with-yocto-kirkstone)
 
 navigate to `build/01047` and use `bitbake iot-connect-image`
 
@@ -141,8 +112,7 @@ Once the layers have been integrated as per the instructions above & recipe iot-
     ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
     ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/iot-connect-image-sm2s-imx8mp.wic
     ```
-
- - on the target (via serial debug or ssh terminal (for serial debug please see Section 3.10 RS485 / RS232 (SER0) in *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* )) execute `basic-sample`
+On the target (via serial debug or ssh terminal (for serial debug please see Section 3.10 RS485 / RS232 (SER0) in *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* )) execute `basic-sample`
 
 
 
@@ -302,3 +272,45 @@ From the `imx-yocto-bsp/maaxboard/build` directory (which you should be in from 
    bitbake iot-connect-image
    ```
 Testing instructions for using a serial adapter and UART are found [here](https://www.hackster.io/monica/getting-started-with-maaxboard-headless-setup-24102b)  
+
+
+## Appendix
+
+
+### MSC LDK Documentation
+
+Available from: https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual
+
+- *MSC_SM2S-IMX8PLUS_Manual*
+- *msc-ldk-bsp-01047-v1.9.0-20220909* (information on getting, cloning and building msc ldk images)
+- *App_Note_035_Using_NXP_Mfgtool+uuu* (important information on flashing and boot select)
+- *App_Note_030_Building_from_MSC_Git_V1_8* (a bit clearer document than *"msc-ldk-bsp-01047-v1.9.0-20220909"*, however misses important step with `git checkout v1.9.0` after cloning initial repo)
+- *MSC-SM2S-MB-EP5_User-Manual_DV3_V013* (can be found here: https://embedded.avnet.com/product/msc-sm2s-mb-ep5/#manual (also requires Avnet Embedded account for it))
+
+### Tweaking iotc-yocto-c-sdk to work with yocto kirkstone
+
+#### meta-iotconnect
+
+##### layer.conf
+
+in `meta-iotconnect/conf/layer.conf`:
+
+- change `LAYERSERIER_COMPAT_meta-iotconnect` to `LAYERSERIES_COMPAT_meta-iotconnect = "kirkstone"`
+
+##### iot-connect_%.bb
+
+in `meta-iotconnect/recipes-apps/iotConnect/iot-connect_0.1.bb` (v0.1 at the time of writing):
+
+- change `cmake_do_generate_toolchain_file_append()` to `cmake_do_generate_toolchain_file:append()`
+
+#### meta-myExampleIoTConnectLayer
+
+##### layer.conf
+
+in `meta-myExampleIoTConnectLayer/conf/layer.conf`:
+- change `LAYERSERIES_COMPAT_meta-myExampleIoTConnectLayer` to `LAYERSERIES_COMPAT_meta-myExampleIotconnectLayer = "kirkstone"`
+
+##### iot-connect_%.bbappend
+
+in `meta-myExampleIoTConnectLayer/recipes-apps/iotConnect/iot-connect_%.bbappen`:
+- change `FILESEXTRAPATHS_prepend := "${THISDIR}:"` to `FILESEXTRAPATHS:prepend := "${THISDIR}:"`
