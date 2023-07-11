@@ -178,7 +178,7 @@ On the target (via serial debug or ssh terminal (for serial debug please see Sec
 
 This example has been tested on Ubuntu 20.04 without issue.
 
-The final directory structure is shown below
+The final directory structure is shown below:
 ```bash
 $ tree -L 2 imx-yocto-bsp/
 imx-yocto-bsp/
@@ -245,12 +245,6 @@ All instructions will take place from the `imx-yocto-bsp` directory unless state
    mv sources/iotc-yocto-c-sdk-main/meta-* sources/ && \
    rm -r main.zip sources/iotc-yocto-c-sdk-main/
    ```
-
-1. Add default user `root` with password `avnet` for iot-connect-base-image
-   ```bash
-   echo -e 'EXTRA_USERS_PARAMS = "\ \n\tusermod -P avnet root; \ \n"' >> sources/meta-iotconnect/recipes-core/images/iot-connect-image.bb 
-   ```
-
 1. Configure the build
    ```bash
    mkdir -p maaxboard/build && \
@@ -272,8 +266,21 @@ From the `imx-yocto-bsp/maaxboard/build` directory (which you should be in from 
    ```bash
    bitbake iot-connect-image
    ```
-Testing instructions for using a serial adapter and UART are found [here](https://www.hackster.io/monica/getting-started-with-maaxboard-headless-setup-24102b)  
+### Testing
 
+Instructions for using a serial adapter and UART are found [here](https://www.hackster.io/monica/getting-started-with-maaxboard-headless-setup-24102b)  
+
+If you haven't already added a user, you can add the default user `root` with password `avnet` to your `build/conf`
+
+from the `imx-yocto-bsp` directory
+
+   ```bash
+echo -e '\nEXTRA_IMAGE_FEATURES=""
+INHERIT += "extrausers"
+EXTRA_USERS_PARAMS = "\ 
+\tusermod -P avnet root; \ 
+"' >> maaxboard/build/conf/local.conf 
+   ```
 
 ## Appendix
 
