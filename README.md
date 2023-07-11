@@ -24,23 +24,23 @@ It's expected that developers will have to provide bespoke elements for their ap
 
 ***Note***: Tested on docker image of Ubuntu 18.04 in combination with Ubuntu 22.04.
 
-- create an account on embedded.avnet.com
+create an account on embedded.avnet.com
 
-- download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf")
+download the msc-ldk from this page https://embedded.avnet.com/product/msc-sm2s-imx8plus/#manual (this was the latest at the time of writing "msc-ldk-bsp-01047-v1.9.0-20220909.pdf")
 
-- - EDIT: list of documents you might need from https://embedded.avnet.com/product/msc-sm2s-imx8plus/
+***Note:*** list of documents you might need from https://embedded.avnet.com/product/msc-sm2s-imx8plus/
 
-- - - *MSC_SM2S-IMX8PLUS_Manual*
-- - - *msc-ldk-bsp-01047-v1.9.0-20220909*
-- - - *App_Note_035_Using_NXP_Mfgtool+uuu*
-- - - *App_Note_030_Building_from_MSC_Git_V1_8*
-- - - *MSC-SM2S-MB-EP5_User-Manual_DV3_V013* (can be found here: https://embedded.avnet.com/product/msc-sm2s-mb-ep5/#manual (also requires Avnet Embedded account for it))
+- *MSC_SM2S-IMX8PLUS_Manual*
+- *msc-ldk-bsp-01047-v1.9.0-20220909*
+- *App_Note_035_Using_NXP_Mfgtool+uuu*
+- *App_Note_030_Building_from_MSC_Git_V1_8*
+- *MSC-SM2S-MB-EP5_User-Manual_DV3_V013* (can be found here: https://embedded.avnet.com/product/msc-sm2s-mb-ep5/#manual (also requires Avnet Embedded account for it))
 
-- - As soon as you get access to embedded.avnet.com find a document named *"msc-ldk-bsp-01047-v1.9.0-20220909"* and *"App_Note_030_Building_from_MSC_Git_V1_8"* and do the RSA SSH key bit mentioned in both documents then send it to address provided in those manuals along with the project code you want to work on (*msc_01047* for SM2S-IMX8PLUS). Do it ASAP too because it'll block you from downloading sm2s-imx8plus bsp and, thus, next steps.
+As soon as you get access to embedded.avnet.com find a document named *"msc-ldk-bsp-01047-v1.9.0-20220909"* and *"App_Note_030_Building_from_MSC_Git_V1_8"* and do the RSA SSH key bit mentioned in both documents then send it to address provided in those manuals along with the project code you want to work on (*msc_01047* for SM2S-IMX8PLUS). Do it ASAP too because it'll block you from downloading sm2s-imx8plus bsp and, thus, next steps.
 
-- - - - ***Note:*** Do these previous steps as soon as possible as they will be blocking you from continuing work.
+- ***Note:*** Do these previous steps as soon as possible as they will be blocking you from continuing work.
 
-- follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to establish the build enviroment. (Up to section  4.7 "Building Images" (not including 4.7) at the time of writing.) 
+follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to establish the build enviroment. (Up to section  4.7 "Building Images" (not including 4.7) at the time of writing.) 
 
 ### Building MSC LDK
 
@@ -142,7 +142,7 @@ Once the layers have been integrated as per the instructions above & recipe iot-
     ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/iot-connect-image-sm2s-imx8mp.wic
     ```
 
- - on the target (via serial debug or ssh terminal (for serial debug please see )) execute `basic-sample`
+ - on the target (via serial debug or ssh terminal (for serial debug please see Section 3.10 RS485 / RS232 (SER0) in *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* )) execute `basic-sample`
 
 
 
