@@ -1,4 +1,4 @@
-# IoT-Connect Yocto Integration
+b# IoT-Connect Yocto Integration
 
 *The following details yocto layers designed to integrate the [IoT-Connect C SDK](https://github.com/avnet-iotconnect/iotc-generic-c-sdk). The end result is a compiled version of the `basic-sample` app provided in the C SDK repo that is installed to an image target. Once said image is flashed to a target, the basic-sample app should successfully run & establish comms with an appropriately setup https://avnet.iotconnect.io/*
 
@@ -107,61 +107,101 @@ It's expected that developers will have to provide bespoke elements for their ap
        bitbake iot-connect-image
       ```
 </details>
-   
+
+This example has been tested on Ubuntu 20.04 without issue.
+
+The final directory structure is shown below
+```bash
+$ tree -L 2 imx-yocto-bsp/
+imx-yocto-bsp/
+├── maaxboard
+│   └── build
+└── sources
+    ├── base
+    ├── meta-browser
+    ├── meta-clang
+    ├── meta-freescale
+    ├── meta-freescale-3rdparty
+    ├── meta-freescale-distro
+    ├── meta-imx
+    ├── meta-iotconnect
+    ├── meta-maaxboard
+    ├── meta-myExampleIotconnectLayer
+    ├── meta-nxp-demo-experience
+    ├── meta-openembedded
+    ├── meta-python2
+    ├── meta-qt5
+    ├── meta-timesys
+    └── poky
+```
+
 1. Install required packages
-   ```
+   ```bash
    sudo apt update && \
    sudo apt install -y gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential
    chrpath socat libsdl1.2-dev xterm sed cvs subversion coreutils texi2html docbook-utils
    python-pysqlite2 help2man make gcc g++ desktop-file-utils libgl1-mesa-dev libglu1-mesa-dev
-   mercurial autoconf automake groff curl lzop asciidoc u-boot-tools cpio sudo locales
+   mercurial autoconf automake groff curl lzop asciidoc u-boot-tools cpio sudo locales python
    ```
 1. Install repo
-   ```
+   ```bash
    curl https://storage.googleapis.com/git-repo-downloads/repo > ./repo && \
    chmod a+x repo && \
    sudo mv repo /usr/bin/
    ```
 1. Download meta layers from NXP using repo
-   ```
+   ```bash
    mkdir -p imx-yocto-bsp && \
    cd imx-yocto-bsp && \
    repo init -u https://github.com/nxp-imx/imx-manifest  -b imx-linux-hardknott -m imx-5.10.35-2.0.0.xml && \
    repo sync
    ```
+
+All instructions will take place from the `imx-yocto-bsp` directory unless stated otherwise.
+
 1. Download Maaxboard sources
-   ```
-   git clone https://github.com/Avnet/meta-maaxboard.git -b hardknott
+   ```bash
+   git clone https://github.com/Avnet/meta-maaxboard.git -b hardknott sources/meta-maaxboard
    ```
 1. Agree to the license
-   ```
+   ```bash
    mkdir imx8mqevk && \
    DISTRO=fsl-imx-wayland MACHINE=imx8mqevk source imx-setup-release.sh -b imx8mqevk && \
+   cd .. && \
    rm -rf imx8mqevk
    ```
 1. Download this repo
-   ```
+   ```bash
    wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/main.zip && \
    unzip main.zip -d sources/ && \
    mv sources/iotc-yocto-c-sdk-main/meta-* sources/ && \
    rm -r main.zip sources/iotc-yocto-c-sdk-main/
    ```
-1. Configure the build
+
+1. Add default user `root` with password `avnet` for iot-connect-base-image
+   ```bash
+   echo -e 'EXTRA_USERS_PARAMS = "\ \n\tusermod -P avnet root; \ \n"' >> sources/meta-iotconnect/recipes-core/images/iot-connect-image.bb 
    ```
+
+1. Configure the build
+   ```bash
    mkdir -p maaxboard/build && \
    source sources/poky/oe-init-build-env maaxboard/build
    ```
+From the `imx-yocto-bsp/maaxboard/build` directory (which you should be in from the previous stage)
 1. Use the build configuration templates from the MaaxBoard layer
-   ```
-   cp imx-yocto-bsp/sources/meta-maaxboard/conf/local.conf.sample imx-yocto-bsp/maaxboard/build/conf/local.conf && \
-   cp imx-yocto-bsp/sources/meta-maaxboard/conf/bblayers.conf.sample imx-yocto-bsp/maaxboard/build/conf/bblayers.conf
+   ```bash
+   mkdir -p conf
+   cp ../../sources/meta-maaxboard/conf/local.conf.sample ./conf/local.conf && \
+   cp ../../sources/meta-maaxboard/conf/bblayers.conf.sample ./conf/bblayers.conf
    ```
 1. Edit build configuration to include these layers
-   ```
-   echo -e '\nBBLAYERS += "${BSPDIR}/sources/meta-iotconnect"' >> maaxboard/build/conf/bblayers.conf && \
-   echo 'BBLAYERS += "${BSPDIR}/sources/meta-myExampleIotconnectLayer"' >> maaxboard/build/conf/bblayers.conf
+   ```bash
+   echo -e '\nBBLAYERS += "${BSPDIR}/sources/meta-iotconnect"' >> conf/bblayers.conf && \
+   echo 'BBLAYERS += "${BSPDIR}/sources/meta-myExampleIotconnectLayer"' >> conf/bblayers.conf
    ```
 1. build!
-   ```
+   ```bash
    bitbake iot-connect-image
    ```
+Testing instructions for using a serial adapter and UART are found [here](https://www.hackster.io/monica/getting-started-with-maaxboard-headless-setup-24102b)  
