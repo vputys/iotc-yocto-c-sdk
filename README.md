@@ -16,9 +16,12 @@ To include the layers within a yocto enviroment:
 
 1. build with a bitbake call e.g. `./bitbake <image-name>`
 
-`inherit core-image
+***Note***: you might need adding lines below to your image
+```
+inherit core-image
 inherit module
-inherit extrausers`
+inherit extrausers
+```
 
 ### Description of layers
 #### meta-iotconnect
