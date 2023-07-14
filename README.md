@@ -12,7 +12,13 @@ To include the layers within a yocto enviroment:
 
 1. add them to `conf/bblayers` file in your build directory
 
-1. build with a bitbake call e.g. `./bitbake iot-connect-image`
+1. add recipes to your image (in `local.conf` for example) - `IMAGE_INSTALL += " iot-c-sdk"`
+
+1. build with a bitbake call e.g. `./bitbake <image-name>`
+
+`inherit core-image
+inherit module
+inherit extrausers`
 
 ### Description of layers
 #### meta-iotconnect
