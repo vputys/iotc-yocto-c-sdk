@@ -53,11 +53,11 @@ echo -e '\nDISTRO_FEATURES_append = " systemd"\nDISTRO_FEATURES_BACKFILL_CONSIDE
 # C SDK stuff
 
 ```bash
-# Get layers from the repo, these links may need updating
-wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/main.zip && \
-unzip main.zip -d .tmp/ && \
-mv .tmp/iotc-yocto-c-sdk-main/meta-* . && \
-rm -r main.zip .tmp/ && \
+# Get layers from the repo
+wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
+unzip hardknott.zip -d .tmp/ && \
+mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* . && \
+rm -r hardknott.zip .tmp/ && \
 
 # Add layers to build and include the recipe to your build
 cd build && \
