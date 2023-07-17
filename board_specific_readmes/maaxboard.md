@@ -88,9 +88,17 @@ From the `imx-yocto-bsp/maaxboard/build` directory (which you should be in from 
    echo -e '\nBBLAYERS += "${BSPDIR}/sources/meta-iotconnect"' >> conf/bblayers.conf && \
    echo 'BBLAYERS += "${BSPDIR}/sources/meta-myExampleIotconnectLayer"' >> conf/bblayers.conf
    ```
+1. Add recipes to your image
+   ```bash
+   echo `\nIMAGE_INSTALL += " iotc-c-sdk" >> <your_image_path>.bb`
+   ```
+   or 
+   ```bash
+   echo `\nIMAGE_INSTALL += " iotc-c-sdk" >> conf/local.conf`
+   ```
 1. build!
    ```bash
-   bitbake iot-connect-image
+   bitbake <your_image_name>
    ```
 ### Testing
 
