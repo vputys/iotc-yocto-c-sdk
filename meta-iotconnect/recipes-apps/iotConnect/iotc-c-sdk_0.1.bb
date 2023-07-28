@@ -53,7 +53,7 @@ destsuffix=${C}/lib/paho.mqtt.c/;\
 SRC_URI += "file://0001_CMake_findPackage.patch;\
 patchdir=${C};\
 "
-cmake_do_generate_toolchain_file_append() {
+cmake_do_generate_toolchain_file:append() {
 	cat >> ${WORKDIR}/toolchain.cmake <<EOF
 $cmake_crosscompiling
 

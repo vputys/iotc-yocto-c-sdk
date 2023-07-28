@@ -55,21 +55,21 @@ Follow the instructions (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) in section 4.7 (
 
 Building will take a while and at the end you will get a lot of built images. Make sure `imx-boot-sm2s-imx8mp-sd.bin-flash_evk` is built.
 
-## Building `iot-connect-image` for sm2s-imx8mp
+## Adding layers and building
 
 clone iotc-yocto-c-sdk into `<basedir>/source`.
 
 Add both layers from iotc-yocto-c-sdk to the `bblayers.conf` file located in `build/01047/conf`
 
-navigate to `build/01047` and use `bitbake iot-connect-image`
+navigate to `build/01047` and use `bitbake <your-image-name>`
 
-After building make sure `iot-connect-image-sm2s-imx8mp.wic` is actually built
+After building make sure `<your_image_name>-sm2s-imx8mp.wic` is actually built
 
 ## Flashing
 
 ***Note:*** if build enviroment is not set up - head to base directory and run `source sources/yocto.git/oe-init-build-env build/01047`
 
-Once the layers have been integrated as per the instructions above & recipe iot-connect-image has been built it can be flashed to the target using:
+Once the layers have been integrated as per the instructions above & your image has been built it can be flashed to the target using:
 
 - ***NOTE:*** before flashing you need to see Section 6.16 (at the time of writing) Boot Options (Also see *"App_Note_035_Using_NXP_Mfgtool+uuu"* document Section 3.3 and further). It has information on what needs to be done to enable flashing via USB cable (you'll need to bridge 2 pins on the back of the board on board startup). In also contains information about DIP switches you might need to configure to enable right boot device (*"App_Note_035_Using_NXP_Mfgtool+uuu"* does not provide information on DIP switches so refer to *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* document Section 3.16 (Boot Selection) or *"MSC_SM2S-IMX8PLUS_Manual"* Section 6.16 (Boot Options)). 
 
@@ -78,7 +78,7 @@ Once the layers have been integrated as per the instructions above & recipe iot-
     ```
     sudo uuu -b emmc_burn_all.lst \
     <path-to>/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
-    <path-to>/iot-connect-image-sm2s-imx8mp.wic
+    <path-to>/<your_image_name>-sm2s-imx8mp.wic
     ```
 
     where might resolve as
@@ -86,7 +86,7 @@ Once the layers have been integrated as per the instructions above & recipe iot-
     ```
     sudo uuu -b emmc_burn_all.lst \
     ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/imx-boot-sm2s-imx8mp-sd.bin-flash_evk \
-    ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/iot-connect-image-sm2s-imx8mp.wic
+    ../../docker-msc-ldk/src/msc-ldk/build/01047/tmp/deploy/images/sm2s-imx8mp/<your_image_name>-sm2s-imx8mp.wic
     ```
 On the target (via serial debug or ssh terminal (for serial debug please see Section 3.10 RS485 / RS232 (SER0) in *"MSC-SM2S-MB-EP5_User-Manual_DV3_V013"* )) execute `basic-sample`
 
