@@ -16,28 +16,28 @@ iot-connect-rpi4/
 ```
 
 ```bash
-# Clone the base layers
-git clone git://git.yoctoproject.org/poky.git -b hardknott
-git clone git://git.openembedded.org/meta-openembedded  -b hardknott
-git clone git://git.yoctoproject.org/meta-raspberrypi.git -b hardknott
-
-# Initialize bitbake
-source poky/oe-init-build-env
-
-# Add layers
+# Clone the base layers \
+git clone git://git.yoctoproject.org/poky.git -b hardknott && \
+git clone git://git.openembedded.org/meta-openembedded  -b hardknott && \
+git clone git://git.yoctoproject.org/meta-raspberrypi.git -b hardknott && \
+\
+# Initialize bitbake \
+source poky/oe-init-build-env && \
+\
+# Add layers \
 bitbake-layers add-layer ../meta-raspberrypi/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-oe/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-python/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-multimedia/ && \
-bitbake-layers add-layer ../meta-openembedded/meta-networking/
-
-# Set machine to raspberrypi4
-sed -i 's/qemux86-64/raspberrypi4/g' ./conf/local.conf 
-
-# Build patch
-echo -e '\nSECURITY_STRINGFORMAT = ""\n' >> ./conf/local.conf 
-
-# Accept the wireless license and enable UART for serial debugging
+bitbake-layers add-layer ../meta-openembedded/meta-networking/ && \
+\
+# Set machine to raspberrypi4 \
+sed -i 's/qemux86-64/raspberrypi4/g' ./conf/local.conf && \
+\
+# Build patch \
+echo -e '\nSECURITY_STRINGFORMAT = ""\n' >> ./conf/local.conf && \
+\
+# Accept the wireless license and enable UART for serial debugging \
 echo -e '\nLICENSE_FLAGS_ACCEPTED = " synaptics-killswitch"\nENABLE_UART = "1"\n' >> ./conf/local.conf
 ```
 
@@ -46,20 +46,19 @@ The target device will not have the correct time set, using a distro with system
 
 ```bash
 # Include systemd to your `local.conf`
-echo -e '\nDISTRO_FEATURES_append = " systemd"\nDISTRO_FEATURES_BACKFILL_CONSIDERED += " sysvinit"\nVIRTUAL-RUNTIME_init_manager = " systemd"\nVIRTUAL-RUNTIME_initscripts = " systemd-compat-units"\n'
- >> ./conf/local.conf
+echo -e '\nDISTRO_FEATURES_append = " systemd"\nDISTRO_FEATURES_BACKFILL_CONSIDERED += " sysvinit"\nVIRTUAL-RUNTIME_init_manager = " systemd"\nVIRTUAL-RUNTIME_initscripts = " systemd-compat-units"\n' >> ./conf/local.conf
 ```
 
 # C SDK stuff
 
 ```bash
-# Get layers from the repo
+# Get layers from the repo \
 wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
 unzip hardknott.zip -d .tmp/ && \
 mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* . && \
 rm -r hardknott.zip .tmp/ && \
-
-# Add layers to build and include the recipe to your build
+\
+# Add layers to build and include the recipe to your build \
 cd build && \
 bitbake-layers add-layer ../meta-iotconnect/ && \
 bitbake-layers add-layer ../meta-myExampleIotconnectLayer/ && \
