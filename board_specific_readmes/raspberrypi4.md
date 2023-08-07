@@ -82,9 +82,9 @@ echo -e '\nDL_DIR ?= "${HOME}/yocto/yocto-downloads"\nSSTATE_DIR ?= "${HOME}/yoc
 echo -e '\nCORE_IMAGE_EXTRA_INSTALL_append = " nano"\n' >> ./conf/local.conf && \
 \
 # Add a user `root` with password `avnet` \
-echo -e '\nEXTRA_IMAGE_FEATURES="" \
-INHERIT += "extrausers" \
-EXTRA_USERS_PARAMS = "\ 
-\tusermod -P avnet root; \ 
-"' >> ./conf/local.conf 
+echo -e 'EXTRA_IMAGE_FEATURES=""' \
+'\nINHERIT += "extrausers"' \
+'\nEXTRA_USERS_PARAMS = " \' \
+'\n\tusermod -P avnet root; \' \
+'\n"' >> ./conf/local.conf
 ```
