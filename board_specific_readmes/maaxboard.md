@@ -66,10 +66,10 @@ All instructions will take place from the `imx-yocto-bsp` directory unless state
    ```
 1. Download this repo
    ```bash
-   wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/main.zip && \
-   unzip main.zip -d sources/ && \
-   mv sources/iotc-yocto-c-sdk-main/meta-* sources/ && \
-   rm -r main.zip sources/iotc-yocto-c-sdk-main/
+   wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
+   unzip hardknott.zip -d sources/ && \
+   mv sources/iotc-yocto-c-sdk-hardknott/meta-* sources/ && \
+   rm -r hardknott.zip sources/iotc-yocto-c-sdk-hardknott/
    ```
 1. Configure the build
    ```bash
