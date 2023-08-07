@@ -55,11 +55,21 @@ echo -e '\nDISTRO_FEATURES_append = " systemd"\nDISTRO_FEATURES_BACKFILL_CONSIDE
 # Get layers from the repo \
 wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
 unzip hardknott.zip -d .tmp/ && \
-mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* . && \
+#this assumes cwd is .../build/... from the previous 'source' command \
+# Get layers from the repo \
+wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
+unzip hardknott.zip -d .tmp/ && \
+#this assumes cwd is .../build/... from the previous 'source' command \
+mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* .. && \
 rm -r hardknott.zip .tmp/ && \
 \
 # Add layers to build and include the recipe to your build \
-cd build && \
+bitbake-layers add-layer ../meta-iotconnect/ && \
+bitbake-layers add-layer ../meta-myExampleIotconnectLayer/ && \
+echo -e '\nIMAGE_INSTALL += " iotc-c-sdk"' >> ./conf/local.conf mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* .. && \
+rm -r hardknott.zip .tmp/ && \
+\
+# Add layers to build and include the recipe to your build \
 bitbake-layers add-layer ../meta-iotconnect/ && \
 bitbake-layers add-layer ../meta-myExampleIotconnectLayer/ && \
 echo -e '\nIMAGE_INSTALL += " iotc-c-sdk"' >> ./conf/local.conf 
