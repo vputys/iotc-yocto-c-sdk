@@ -1,5 +1,7 @@
 # MSC LDK Example
 
+***NOTE: NOT TESTED! Manual changes may be required to make msc layers compatible with `kirkstone`.***
+
 ## Interaction with Avnet Embedded
 
 create an account on embedded.avnet.com
@@ -18,7 +20,11 @@ follow instructions in said guide (*"msc-ldk-bsp-01047-v1.9.0-20220909"*) to est
 
 ***IMPORTANT:*** do not use *"App_Note_030_Building_from_MSC_Git_V1_8"* as guide for building images. It provides information on building generic image and skips an important step mentioned in another document. Please use *"msc-ldk-bsp-01047-v1.9.0-20220909"* guide to build images.
 
+***IMPORTANT:*** when using `./setup.sh --bsp=01047` to setup everything you might need to use this command instead - `./setup.sh --bsp=01047 --branch=kirkstone`. //TODO: this is untested.
+
 ***Also note:*** *"msc-ldk-bsp-01047-v1.9.0-20220909"* document in Section 4.3 makes a typo. `git checkout 1.9.0` must be `git checkout v1.9.0`.
+
+
 
 
 ### Docker build
