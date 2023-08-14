@@ -1,5 +1,7 @@
 # IoT-Connect Yocto Integration
-***This IoT-Connect connect layer only supports `hardknott`***
+***IoT-Connect connect layer for `dunfell` yocto release***
+
+***Note***: tested only on RPI4B so far.
 
 *The following details yocto layers designed to integrate the [IoT-Connect C SDK](https://github.com/avnet-iotconnect/iotc-generic-c-sdk). The end result is a compiled version of the `basic-sample` app provided in the C SDK repo that is installed to an image target. Once said image is flashed to a target, the basic-sample app should successfully run & establish comms with an appropriately setup https://avnet.iotconnect.io/*
 
