@@ -1,5 +1,7 @@
 # MSC LDK Example
 
+***NOTE:*** msc-ldk-bsp-01047 has branch named "dunfell-ryzen", however it was not tested to work yet.
+
 ## Interaction with Avnet Embedded
 
 create an account on embedded.avnet.com
