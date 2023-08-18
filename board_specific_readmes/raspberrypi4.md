@@ -1,4 +1,4 @@
-# Pi4 build from scratch
+# # Raspberry Pi 4 Model B build from scratch
 
 Final directory structure (abridged)
 ```bash
@@ -7,71 +7,88 @@ iot-connect-rpi4/
 ├── build
 │   └── conf
 ├── meta-iotconnect
-├── meta-iotc-python-sdk
 ├── meta-myExampleIotconnectLayer
-├── meta-my-iotc-python-sdk-example
 ├── meta-openembedded
 ├── meta-raspberrypi
 └── poky
 ```
 
-```bash
-# Clone the base layers \
-git clone git://git.yoctoproject.org/poky.git -b hardknott && \
-git clone git://git.openembedded.org/meta-openembedded  -b hardknott && \
-git clone git://git.yoctoproject.org/meta-raspberrypi.git -b hardknott && \
-\
-# Initialize bitbake \
-source poky/oe-init-build-env && \
-\
-# Add layers \
+***Note: `hardknott` yocto branch***
+
+## Cloning
+
+- Clone these layers to your work directory:
+``` 
+    git clone git://git.yoctoproject.org/poky.git -b hardknott &&
+    git clone git://git.openembedded.org/meta-openembedded  -b hardknott &&
+    git clone git://git.yoctoproject.org/meta-raspberrypi.git -b hardknott &&
+    git clone git@github.com:avnet-iotconnect/iotc-yocto-c-sdk.git -b hardknott
+```
+
+## Source work environment: 
+
+```
+source poky/oe-init-build-env build
+```
+
+## Layers
+
+- Add following layers to your `bblayers.conf` file usually found in `<your_path>/build/conf/`:
+
+```
 bitbake-layers add-layer ../meta-raspberrypi/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-oe/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-python/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-multimedia/ && \
 bitbake-layers add-layer ../meta-openembedded/meta-networking/ && \
-\
-# Set machine to raspberrypi4 \
-sed -i 's/qemux86-64/raspberrypi4/g' ./conf/local.conf && \
-\
-# Build patch \
-echo -e '\nSECURITY_STRINGFORMAT = ""\n' >> ./conf/local.conf && \
-\
-# Accept the wireless license and enable UART for serial debugging \
-echo -e '\nLICENSE_FLAGS_ACCEPTED = " synaptics-killswitch"\nENABLE_UART = "1"\n' >> ./conf/local.conf
+bitbake-layers add-layer ../iotc-yocto-c-sdk/meta-iotconnect && \
+bitbake-layers add-layer ../iotc-yocto-c-sdk/meta-myExampleIotconnectLayer 
 ```
 
-NOTE:
-The target device will not have the correct time set, using a distro with systemd fixes this, there may be alternatives but the easiest option is to include systemd to your image
+## Adding IoTConnect C SDK recipe
 
-```bash
-# Include systemd to your `local.conf`
-echo -e '\nDISTRO_FEATURES_append = " systemd"\nDISTRO_FEATURES_BACKFILL_CONSIDERED += " sysvinit"\nVIRTUAL-RUNTIME_init_manager = " systemd"\nVIRTUAL-RUNTIME_initscripts = " systemd-compat-units"\n' >> ./conf/local.conf
+- Assuming you're in `build` folder:
+
 ```
-
-# C SDK stuff
-
-```bash
-# Get layers from the repo \
-wget https://github.com/avnet-iotconnect/iotc-yocto-c-sdk/archive/refs/heads/hardknott.zip && \
-unzip hardknott.zip -d .tmp/ && \
-# This assumes cwd is .../build/... from the previous 'source' command \
-mv .tmp/iotc-yocto-c-sdk-hardknott/meta-* .. && \
-rm -r hardknott.zip .tmp/ && \
-\
-# Add layers to build and include the recipe to your build \
-bitbake-layers add-layer ../meta-iotconnect/ && \
-bitbake-layers add-layer ../meta-myExampleIotconnectLayer/ && \
-echo -e '\nIMAGE_INSTALL += " iotc-c-sdk"' >> ./conf/local.conf 
+echo -e '\nIMAGE_INSTALL += " iotc-c-sdk"' >> conf/local.conf
 ```
+or add this line to your image manually `IMAGE_INSTALL += " iotc-c-sdk"`
 
-# Build
+- then: 
 
-```bash
+## Connectivity and uart:
+```
+echo -e '\nMACHINE = "raspberrypi4"\nDISTRO_FEATURES:append = " systemd"\nVIRTUAL-RUNTIME_init_manager = "systemd"\nENABLE_UART = "1"' >> conf/local.conf
+```
+**OR**
+```
+echo -e '\nMACHINE = "raspberrypi4"\nIMAGE_INSTALL += " connman"\nIMAGE_INSTALL += " connman-client"\nENABLE_UART = "1"' >> conf/local.conf
+```
+## Build
+- Build image:
+```
 bitbake core-image-base
 ```
 
+## One giant copy-paste command:
 
+```
+git clone git://git.yoctoproject.org/poky.git -b hardknott &&
+git clone git://git.openembedded.org/meta-openembedded  -b hardknott &&
+git clone git://git.yoctoproject.org/meta-raspberrypi.git -b hardknott &&
+git clone git@github.com:avnet-iotconnect/iotc-yocto-c-sdk.git -b hardknott &&
+source poky/oe-init-build-env build &&
+bitbake-layers add-layer ../meta-raspberrypi/ && \
+bitbake-layers add-layer ../meta-openembedded/meta-oe/ && \
+bitbake-layers add-layer ../meta-openembedded/meta-python/ && \
+bitbake-layers add-layer ../meta-openembedded/meta-multimedia/ && \
+bitbake-layers add-layer ../meta-openembedded/meta-networking/ && \
+bitbake-layers add-layer ../iotc-yocto-c-sdk/meta-iotconnect && \
+bitbake-layers add-layer ../iotc-yocto-c-sdk/meta-myExampleIotconnectLayer &&
+echo -e '\nMACHINE = "raspberrypi4"\nIMAGE_INSTALL += " connman"\nIMAGE_INSTALL += " connman-client"\nENABLE_UART = "1"' >> conf/local.conf &&
+echo -e '\nIMAGE_INSTALL += " iotc-c-sdk"' >> conf/local.conf &&
+bitbake core-image-base
+```
 # Pi optional
 
 ```bash
