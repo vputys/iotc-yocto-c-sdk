@@ -47,7 +47,7 @@ imx-yocto-bsp/
    ```bash
    mkdir -p imx-yocto-bsp && \
    cd imx-yocto-bsp && \
-   repo init -u https://github.com/nxp-imx/imx-manifest  -b imx-linux-hardknott -m imx-5.10.35-2.0.0.xml && \
+   repo init -u https://github.com/nxp-imx/imx-manifest  -b imx-linux-kirkstone -m imx-5.10.35-2.0.0.xml && \
    repo sync
    ```
 
@@ -55,7 +55,7 @@ All instructions will take place from the `imx-yocto-bsp` directory unless state
 
 1. Download Maaxboard sources
    ```bash
-   git clone https://github.com/Avnet/meta-maaxboard.git -b hardknott sources/meta-maaxboard
+   git clone https://github.com/Avnet/meta-maaxboard.git -b kirkstone sources/meta-maaxboard
    ```
 1. Agree to the license
    ```bash
