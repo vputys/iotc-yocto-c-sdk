@@ -11,6 +11,7 @@ DEPENDS += " curl"
 DEPENDS += " pkgconfig"
 DEPENDS += " openssl"
 DEPENDS += " util-linux"
+RDEPENDS:${PN} += "systemd"
 
 # Where to keep downloaded source files (in tmp/work/...)
 C="${WORKDIR}/git"
