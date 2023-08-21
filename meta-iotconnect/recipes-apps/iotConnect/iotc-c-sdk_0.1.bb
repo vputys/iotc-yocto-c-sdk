@@ -21,9 +21,9 @@ SRCREV_FORMAT="machine_meta"
 SRCREV="${AUTOREV}"
 
 # Where to find source files (can be local, GitHub, etc.)
-SRC_URI = "git://github.com/avnet-iotconnect/iotc-generic-c-sdk.git;\
+SRC_URI = "git://github.com/vputys/iotc-generic-c-sdk.git;\
 protocol=https;\
-branch=main;\
+branch=testig/vlad;\
 destsuffix=${C};\
 "
 
@@ -69,6 +69,7 @@ EOF
 do_install() {
     install -d ${D}${bindir}
     install -m 0755 basic-sample ${D}${bindir}
+    install -m 0755 basic-sample-x509 ${D}${bindir}
     install -d ${D}${sysconfdir}/ssl/certs
     install -m 0755 ${S}/certs/server.pem ${D}${sysconfdir}/ssl/certs/
 }

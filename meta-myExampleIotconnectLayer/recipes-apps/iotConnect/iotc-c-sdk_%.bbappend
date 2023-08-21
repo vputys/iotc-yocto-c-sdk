@@ -1,5 +1,14 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}:"
 
 SRC_URI += "file://app_config.h;\
-subdir=${S}/config;\
+subdir=${S}/symmkey;\
 "
+
+SRC_URI += "file://x509_config/app_config.h;\
+subdir=${S}/;\
+"
+
+do_configure:append() {
+    install -d {S}/x509_config
+    install -d {S}/symmkey
+}
