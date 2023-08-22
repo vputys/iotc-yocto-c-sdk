@@ -8,6 +8,8 @@ SRC_URI += "file://x509_config/app_config.h;\
 subdir=${S}/;\
 "
 
+DEPENDS += " adding-x509-certs-c-sdk"
+
 do_configure:append() {
     install -d {S}/x509_config
     install -d {S}/symmkey
