@@ -12,3 +12,7 @@ do_configure:append() {
     install -d {S}/x509_config
     install -d {S}/symmkey
 }
+
+do_install:append() {
+    install -m 0755 basic-sample-x509 ${D}${bindir}
+}
