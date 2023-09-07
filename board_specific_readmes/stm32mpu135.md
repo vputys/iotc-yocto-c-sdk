@@ -4,7 +4,7 @@
 
 <summary>Super-quickstart</summary>
 
-`mkdir` at your prefferred location, `cd` into it then copy/paste the following into your terminal.
+`mkdir` at your preferred location, `cd` into it then copy/paste the following into your terminal.
 
 ``` bash
 repo init https://github.com/STMicroelectronics/oe-manifest -b kirkstone && \
