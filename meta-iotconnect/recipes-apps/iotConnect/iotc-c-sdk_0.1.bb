@@ -22,7 +22,7 @@ SRCREV="${AUTOREV}"
 # Where to find source files (can be local, GitHub, etc.)
 
 # This points to my branch of my fork of generic c sdk for now. TODO: change back when merged
-SRC_URI = "git://github.com/vputys/iotc-generic-c-sdk.git;\
+SRC_URI = "git://github.com/avnet-iotconnect/iotc-generic-c-sdk.git;\
 protocol=https;\
 branch=feature/IOTSDK-226-cli-x509-json;\
 destsuffix=${C};\
