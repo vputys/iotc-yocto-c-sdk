@@ -12,20 +12,28 @@ DEPENDS += " pkgconfig"
 DEPENDS += " openssl"
 DEPENDS += " util-linux"
 RDEPENDS:${PN} += "systemd"
+RDEPENDS:${PN} += "bash"
+RDEPENDS:${PN} += "perl"
+RDEPENDS:${PN} += "make"
+RDEPENDS:${PN} += "ruby"
+
+PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
+
+RDEPENDS:${PN}-staticdev = ""
+RDEPENDS:${PN}-dev = ""
+RDEPENDS:${PN}-dbg = ""
 
 # Where to keep downloaded source files (in tmp/work/...)
 C="${WORKDIR}/git"
-S="${C}/samples/basic-sample"
+S="${C}/iotc-generic-c-sdk"
 
 SRCREV_FORMAT="machine_meta"
 SRCREV="${AUTOREV}"
 
 # Where to find source files (can be local, GitHub, etc.)
-
-# This points to my branch of my fork of generic c sdk for now. TODO: change back when merged
-SRC_URI = "git://github.com/vputys/iotc-generic-c-sdk.git;\
+SRC_URI = "git://github.com/avnet-iotconnect/iotc-generic-c-sdk.git;\
 protocol=https;\
-branch=testig/vlad;\
+branch=main;\
 destsuffix=${C};\
 "
 
@@ -56,21 +64,30 @@ destsuffix=${C}/lib/paho.mqtt.c/;\
 SRC_URI += "file://0001_CMake_findPackage.patch;\
 patchdir=${C};\
 "
+
 cmake_do_generate_toolchain_file:append() {
 	cat >> ${WORKDIR}/toolchain.cmake <<EOF
 $cmake_crosscompiling
 
 set( PC_CURL_LIBRARY_DIRS "${STAGING_LIBDIR}")
 
-#find_package(CURL REQUIRED)
 EOF
 }
 
+FILES:${PN} += "/lib/* \
+  /iotc-generic-c-sdk/* \
+"
+do_populate_sysroot() {
+    mkdir -p ${SYSROOT_DESTDIR}/lib
+    cp -r ${C}/lib/* ${SYSROOT_DESTDIR}/lib/
+    rm -r ${SYSROOT_DESTDIR}/lib/paho.mqtt.c/test/python
+    cp -r ${C}/iotc-generic-c-sdk ${SYSROOT_DESTDIR}/
+}
 
 # Create /usr/bin in rootfs and copy program to it
 do_install() {
-    install -d ${D}${bindir}
-    install -m 0755 basic-sample ${D}${bindir}
-    install -d ${D}${sysconfdir}/ssl/certs
-    install -m 0755 ${S}/certs/server.pem ${D}${sysconfdir}/ssl/certs/
+    mkdir -p ${D}/lib
+    cp -r ${C}/lib/* ${D}/lib/
+    rm -r ${D}/lib/paho.mqtt.c/test/python
+    cp -r ${C}/iotc-generic-c-sdk ${D}/
 }
