@@ -1,0 +1,14 @@
+{
+    "duid": "CSDKYoctoVladSelfSigned",
+    "cpid": "avtds",
+    "env": "avnetpoc",
+    "auth_type": "IOTC_AT_X509",
+    "x509_certs": {
+        "client_key": "/home/client1-key.pem",
+        "client_cert": "/home/client1.pem"
+    },
+    "sensor": {
+        "name": "Voyager-Sensor",
+        "path": "/tmp/voy2_kms"
+    }
+}

@@ -7,15 +7,18 @@ inherit cmake
 
 DEPENDS += " iotc-c-sdk"
 
+PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
+PROVIDES = "${PN} ${PN}-dev"
 
+PRIVATE_DATA_DIR = "${base_prefix}/usr/local/iotc"
+
+FILES:${PN}-dev = "${PRIVATE_DATA_DIR}/* \
+"
 
 SRCREV_FORMAT="machine_meta"
 SRCREV="${AUTOREV}"
 
 #FILEPATH = "${THISDIR}/files"
-
-HOME_DIR = "${base_prefix}/home"
-
 
 SRC_URI += "gitsm://github.com/DaveGamble/cJSON.git;\
 protocol=https;\
@@ -29,7 +32,9 @@ subdir=${S}; \
 file://CMakeLists.txt;\
 subdir=${S}; \
 file://config/app_config.h;\
-subdir=${S}"
+subdir=${S}; \
+file://eg-private-repo-data \
+"
 
 cmake_do_generate_toolchain_file:append() {
 	cat >> ${WORKDIR}/toolchain.cmake <<EOF
@@ -46,7 +51,15 @@ EOF
 
 do_install() {
     install -d ${D}${bindir}
-    
     install -m 0755 basic-sample-test ${D}${bindir}
 
+    for f in ${WORKDIR}/eg-private-repo-data/*
+    do
+        if [ -f $f ]; then
+            if [ ! -d ${D}${PRIVATE_DATA_DIR} ]; then
+                install -d ${D}${PRIVATE_DATA_DIR}
+            fi
+            install -m 0755 $f ${D}${PRIVATE_DATA_DIR}/
+        fi
+    done
 }
