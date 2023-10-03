@@ -23,10 +23,11 @@
 // If using TPM, provide the Scope ID here:
 #define IOTCONNECT_SCOPE_ID ""// AKA ID Scope.
 
-#define IOTCONNECT_CERT_PATH "../certs"
+#define IOTCONNECT_CERT_PATH "/etc/ssl/certs"
 
 // This is the CA Certificate used to validate the IoTHub TLS Connection and it is required for all authentication types.
 // Alternatively, you can point this file to /etc/ssl/certs/Baltimore_CyberTrust_Root.pem on some Linux systems
+//#define IOTCONNECT_SERVER_CERT (IOTCONNECT_CERT_PATH "/server.pem")
 #define IOTCONNECT_SERVER_CERT ("/etc/ssl/certs/Baltimore_CyberTrust_Root.pem")
 
 // if IOTC_X509 is used:
