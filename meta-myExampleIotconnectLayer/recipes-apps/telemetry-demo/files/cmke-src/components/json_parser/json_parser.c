@@ -276,12 +276,14 @@ static int parse_x509_certs(const cJSON* json_parser, char** id_key, char** id_c
 }
 
 //TODO: add error checking
-int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commands, sensors_data_t *local_sensors){
+int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commands, sensors_data_t *local_sensors, char** board){
 
     if (!json_str){
         printf("NULL PTR. Aborting\n");
         return 1;
     }
+
+    int ret = 0;
 
     cJSON *json_parser = NULL;
 
@@ -296,34 +298,40 @@ int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_con
         {
             fprintf(stderr, "Error before: %s\n", error_ptr);
         }
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     if (parse_base_params(&iotc_config->duid, "duid", json_parser) != 0){
         printf("Failed to get duid from json file. Aborting.\r\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     if (parse_base_params(&iotc_config->cpid, "cpid", json_parser) != 0){
         printf("Failed to get duid from json file. Aborting.\r\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     if (parse_base_params(&iotc_config->env, "env", json_parser) != 0){
         printf("Failed to get duid from json file. Aborting.\r\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     if (parse_base_params(&iotc_config->auth_info.trust_store, "iotc_server_cert", json_parser) != 0){
         printf("Failed to get iotc_server_cert from json file. Aborting.\r\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
     
     auth_type = cJSON_GetObjectItemCaseSensitive(json_parser, "auth_type");
 
     if (!auth_type) {
         printf("Failed to get auth_type. Aborting\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     printf("auth type: %s\n", auth_type->valuestring);
@@ -338,7 +346,8 @@ int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_con
         iotc_config->auth_info.type = IOTC_AT_TOKEN;
     } else {
         printf("unsupported auth type. Aborting\r\n");
-        goto FAIL;
+        ret = 1; 
+        goto END;
     }
 
     //return 1;
@@ -356,10 +365,11 @@ int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_con
     } else if (iotc_config->auth_info.type == IOTC_AT_SYMMETRIC_KEY) {
         
         if (cJSON_HasObjectItem(json_parser, "symmkey") == true){
-            //return 1;
+
             if (parse_base_params(&iotc_config->auth_info.data.symmetric_key, "symmkey", json_parser) != 0){
                 printf("Failed to get duid from json file. Aborting.\r\n");
-                goto FAIL;
+                ret = 1; 
+                goto END;
             }
 
             printf("SYMMKEY: %s\r\n", iotc_config->auth_info.data.symmetric_key);
@@ -376,48 +386,43 @@ int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_con
 
         if (!device_parser){
             printf("Failed to get device object from json\r\n");
-            goto FAIL;
+            ret = 1; 
+            goto END;
         }
 
 
 
-        /*
-        if (parse_base_params(&local_data.board_name, "name", device_parser) != 0) {
+        
+        if (parse_base_params(&board, "name", device_parser) != 0) {
             printf("failed to get board name\r\n");
-            goto FAIL;
+            ret = 1; 
+            goto END;
         }
-        */
+        
 
 
         if (parse_telemetry_settings(device_parser, local_sensors) != 0){
             printf("Failed to parse telemetry settings\r\n");
-            goto FAIL;
+            ret = 1; 
+            goto END;
         }
 
         if (cJSON_HasObjectItem(device_parser, "commands") == true){
 
-        if (parse_commands(device_parser, local_commands) != 0){
-            printf("failed to parse commands. Aborting\r\n");
-            goto FAIL;
-        }
+            if (parse_commands(device_parser, local_commands) != 0){
+                printf("failed to parse commands. Aborting\r\n");
+                ret = 1; 
+                goto END;
+            }
 
         //printf("sensor data: name - %s; path - %s\r\n", sensor->s_name, sensor->s_path);
-    }
+        }
 
 
     }
 
-    
+END: 
     cJSON_Delete(json_parser);
-    return 0;
-
-FAIL:
-
-    // TODO: FIXME
-    //free_iotc_config(iotc_config);
-    //free_sensor_data(sensors);
-
-    cJSON_Delete(json_parser);
-    return 1;
+    return ret;
 
 }

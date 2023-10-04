@@ -515,13 +515,16 @@ int main(int argc, char *argv[]) {
 
         fclose(fd);
 
-        if (parse_parameters_json(json_str, config, &local_data.commands, &local_data.sensors) != 0) {
+        if (parse_json_config(json_str, config, &local_data.commands, &local_data.sensors, &local_data.board_name) != 0) {
             printf("Failed to parse input JSON file. Aborting\n");
             if (json_str != NULL) {
                 free(json_str);
                 json_str = NULL;
             }
             free_local_data();
+            free_iotc_config(config);
+
+
             return 1;
         }
         
@@ -626,7 +629,7 @@ int main(int argc, char *argv[]) {
     }
 
     free_iotc_config(config);
-    //free_sensor_data(&sensors);
+
     free_local_data();
 
     return 0;
