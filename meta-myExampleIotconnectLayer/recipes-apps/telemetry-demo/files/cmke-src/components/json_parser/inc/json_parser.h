@@ -50,7 +50,7 @@ typedef struct commands_data {
 
 } commands_data_t;
 
-int parse_parameters_json(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commadns, sensors_data_t *local_sensors);
+int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commadns, sensors_data_t *local_sensors, char** board);
 
 
 #endif
