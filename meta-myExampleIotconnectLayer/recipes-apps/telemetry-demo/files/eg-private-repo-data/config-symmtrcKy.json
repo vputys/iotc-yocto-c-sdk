@@ -1,9 +1,9 @@
 {
-    "duid": "azRTOS-demo-blueboard",
-    "cpid": "avtds",
-    "env": "avnetpoc",
+    "duid": "your-duid",
+    "cpid": "your-cpid",
+    "env": "your-env",
     "auth_type": "IOTC_AT_SYMMETRIC_KEY",
-    "symmkey": "UN0TwIaNf4LOOQVt79t3rw==",
+    "symmkey": "your-symkey",
     "sensor": {
         "name": "Voyager-Sensor",
         "path": "/tmp/voy2_kms"
