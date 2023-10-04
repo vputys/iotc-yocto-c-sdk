@@ -18,21 +18,14 @@ FILES:${PN}-dev = "${PRIVATE_DATA_DIR}/* \
 SRCREV_FORMAT="machine_meta"
 SRCREV="${AUTOREV}"
 
-#FILEPATH = "${THISDIR}/files"
-
 SRC_URI += "gitsm://github.com/DaveGamble/cJSON.git;\
 protocol=https;\
 branch=master;\
 destsuffix=${C}/lib/cJSON/;\
 "
-S="${WORKDIR}/src"
+S="${WORKDIR}/cmke-src"
 
-SRC_URI = "file://main.c;\
-subdir=${S}; \
-file://CMakeLists.txt;\
-subdir=${S}; \
-file://config/app_config.h;\
-subdir=${S}; \
+SRC_URI = "file://cmke-src; \
 file://eg-private-repo-data \
 "
 
