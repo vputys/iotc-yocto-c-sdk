@@ -88,71 +88,6 @@ static void on_connection_status(IotConnectConnectionStatus status) {
     }
 }
 
-static int get_command_type(const char* command_str) {
-
-    int command = 0;
-
-    if (DOES_COMMAND_MATCH(command_str, ECHO)){
-        command = ECHO;
-    } else if (DOES_COMMAND_MATCH(command_str, LED)){
-        command = LED;
-    } else {
-        printf("Unknown command\r\n");
-    }
-
-    return command;
-
-}
-
-static int command_led(const char* command_str){
-
-    char* command_str_copy = strdup(command_str);
-    char* token = NULL;
-
-    token = strtok(command_str_copy, " ");
-
-    int res = 0;
-
-    int pos = -1;
-    for (int i = 0; i < local_data.commands.counter; i++){
-        if (strcmp(local_data.commands.commands[i].name, "led") == STRINGS_ARE_EQUAL){
-            pos = i;
-        }
-    }
-    if (pos == -1){
-        printf("Failed to find led command in config?\r\n");
-        FREE(command_str_copy);
-        return 1;
-    }
-
-    while(token){
-
-        FILE *fd = NULL;
-
-        fd = fopen(local_data.commands.commands[pos].private_data, "w");
-
-        if (!fd) {
-            printf("failed to open file.\r\n");
-            FREE(command_str_copy);
-            return 1;
-        }
-
-        res = fputs(token, fd);
-
-        fclose(fd);
-        if (res == EOF){
-            printf("failed to write. aborting\r\n");
-            FREE(command_str_copy);
-            return 1;
-        }
-        usleep(3000000); // 3s
-        token = strtok(NULL, " ");
-    }
-
-    FREE(command_str_copy);
-    return 0;
-
-}
 
 static void command_status(IotclEventData data, const char *command_name) {
 
@@ -162,33 +97,7 @@ static void command_status(IotclEventData data, const char *command_name) {
 
     if (strcmp(command_name, "Internal error") == STRINGS_ARE_EQUAL){
         printf("Internal error (null ptr command)\r\n");
-        goto END;
     }
-
-    command_type = get_command_type(command_name);
-
-    switch (command_type){
-    case ECHO:
-        printf("%s\r\n", &command_name[strlen(command_strings[ECHO])]);
-        publish_message("last_command", command_name);
-        success = true;
-        break;
-    case LED:
-        printf("LED\r\n");
-        if (command_led(command_name) != 0){
-            printf("failed to parse LED command\r\n");
-        }
-        else{
-            success = true;
-        }
-        break;
-    default:
-        success = false;
-        printf("Unsupported command\r\n");
-        break;
-    }
-
-END:
 
     const char* message = success ? "OK" : "Failed_or_not_implemented";
 
