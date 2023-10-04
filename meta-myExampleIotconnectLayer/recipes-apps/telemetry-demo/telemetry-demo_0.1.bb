@@ -3,30 +3,25 @@ SUMMARY = "Recipe that compiles and deploys a telemetry demo"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit cmake
-
 DEPENDS += " iotc-c-sdk"
-
-PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
 PROVIDES = "${PN} ${PN}-dev"
 
-PRIVATE_DATA_DIR = "${base_prefix}/usr/local/iotc"
-
-FILES:${PN}-dev = "${PRIVATE_DATA_DIR}/* \
+SRC_URI = "file://cmke-src; \
+file://eg-private-repo-data \
 "
 
 SRCREV_FORMAT="machine_meta"
 SRCREV="${AUTOREV}"
 
-SRC_URI += "gitsm://github.com/DaveGamble/cJSON.git;\
-protocol=https;\
-branch=master;\
-destsuffix=${C}/lib/cJSON/;\
-"
 S="${WORKDIR}/cmke-src"
 
-SRC_URI = "file://cmke-src; \
-file://eg-private-repo-data \
+inherit cmake
+
+PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
+
+PRIVATE_DATA_DIR = "${base_prefix}/usr/local/iotc"
+
+FILES:${PN}-dev = "${PRIVATE_DATA_DIR}/* \
 "
 
 cmake_do_generate_toolchain_file:append() {

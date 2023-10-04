@@ -5,30 +5,11 @@ DESCRIPTION = "this recipe pulls the C SDK from the IoT Connect git repos; Sets 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit cmake
-
-DEPENDS += " curl"
-DEPENDS += " pkgconfig"
-DEPENDS += " openssl"
-DEPENDS += " util-linux"
-RDEPENDS:${PN} += "systemd"
-RDEPENDS:${PN} += "bash"
-RDEPENDS:${PN} += "perl"
-RDEPENDS:${PN} += "make"
-RDEPENDS:${PN} += "ruby"
-
-PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
-
-RDEPENDS:${PN}-staticdev = ""
-RDEPENDS:${PN}-dev = ""
-RDEPENDS:${PN}-dbg = ""
-
-# Where to keep downloaded source files (in tmp/work/...)
-C="${WORKDIR}/git"
-S="${C}/iotc-generic-c-sdk"
-
-SRCREV_FORMAT="machine_meta"
-SRCREV="${AUTOREV}"
+DEPENDS = "curl \
+    pkgconfig \
+    openssl \
+    util-linux \
+"
 
 # Where to find source files (can be local, GitHub, etc.)
 SRC_URI = "git://github.com/avnet-iotconnect/iotc-generic-c-sdk.git;\
@@ -65,6 +46,15 @@ SRC_URI += "file://0001_CMake_findPackage.patch;\
 patchdir=${C};\
 "
 
+SRCREV_FORMAT="machine_meta"
+SRCREV="${AUTOREV}"
+
+# Where to keep downloaded source files (in tmp/work/...)
+C="${WORKDIR}/git"
+S="${C}/iotc-generic-c-sdk"
+
+inherit cmake
+
 cmake_do_generate_toolchain_file:append() {
 	cat >> ${WORKDIR}/toolchain.cmake <<EOF
 $cmake_crosscompiling
@@ -74,20 +64,34 @@ set( PC_CURL_LIBRARY_DIRS "${STAGING_LIBDIR}")
 EOF
 }
 
+PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
+
 FILES:${PN} += "/lib/* \
   /iotc-generic-c-sdk/* \
 "
+
+RDEPENDS:${PN} = "systemd \
+	bash \
+	perl \
+	make \
+	ruby \
+"
+
+RDEPENDS:${PN}-staticdev = ""
+RDEPENDS:${PN}-dev = ""
+RDEPENDS:${PN}-dbg = ""
+
 do_populate_sysroot() {
     mkdir -p ${SYSROOT_DESTDIR}/lib
-    cp -r ${C}/lib/* ${SYSROOT_DESTDIR}/lib/
+    cp -r --no-preserve=ownership ${C}/lib/* ${SYSROOT_DESTDIR}/lib/
     rm -r ${SYSROOT_DESTDIR}/lib/paho.mqtt.c/test/python
-    cp -r ${C}/iotc-generic-c-sdk ${SYSROOT_DESTDIR}/
+    cp -r --no-preserve=ownership ${C}/iotc-generic-c-sdk ${SYSROOT_DESTDIR}/
 }
 
 # Create /usr/bin in rootfs and copy program to it
 do_install() {
     mkdir -p ${D}/lib
-    cp -r ${C}/lib/* ${D}/lib/
+    cp -r --no-preserve=ownership ${C}/lib/* ${D}/lib/
     rm -r ${D}/lib/paho.mqtt.c/test/python
-    cp -r ${C}/iotc-generic-c-sdk ${D}/
+    cp -r --no-preserve=ownership ${C}/iotc-generic-c-sdk ${D}/
 }
