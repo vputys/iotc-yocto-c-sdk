@@ -7,6 +7,8 @@ static int parse_telemetry_settings(cJSON *json_parser, sensors_data_t *local_se
 static int parse_commands(cJSON *json_parser, commands_data_t *commands);
 static int parse_base_params(char** dest, char* json_src, cJSON* json_parser);
 static int parse_sensors(const cJSON* json_parser, sensors_data_t *sensors);
+static int parse_auth(cJSON *parser, IotConnectClientConfig* iotc_config);
+static int parse_auth_params(cJSON *parser, IotConnectClientConfig* iotc_config);
 
 static int parse_telemetry_settings(cJSON *json_parser, sensors_data_t *local_sensors){
 
@@ -275,6 +277,93 @@ static int parse_x509_certs(const cJSON* json_parser, char** id_key, char** id_c
     return 0;
 }
 
+static int parse_auth_params(cJSON *parser, IotConnectClientConfig* iotc_config) {
+
+
+    switch (iotc_config->auth_info.type){
+    case IOTC_AT_X509:
+
+        if (parse_base_params(&iotc_config->auth_info.data.cert_info.device_key, "client_key", parser) != 0){
+            printf("Failed to get client key from json file. Aborting.\r\n");
+            return 1;
+        }
+
+        if (parse_base_params(&iotc_config->auth_info.data.cert_info.device_cert, "client_cert", parser) != 0){
+            printf("Failed to get client cert from json file. Aborting.\r\n");
+            return 1;
+        }
+    
+
+        break;
+    case IOTC_AT_SYMMETRIC_KEY:
+        
+        if (parse_base_params(&iotc_config->auth_info.data.symmetric_key, "primary_key", parser) != 0){
+            printf("Failed to get duid from json file. Aborting.\r\n");
+            return 1;
+        }
+
+        printf("SYMMKEY: %s\r\n", iotc_config->auth_info.data.symmetric_key);
+    
+        break;
+    case IOTC_AT_TOKEN:
+        break;
+    default:
+        printf("placeholder auth type\r\n");
+        break;
+    }
+
+}
+
+static int parse_auth(cJSON *parser, IotConnectClientConfig* iotc_config){
+
+    cJSON *auth_type;
+
+    auth_type = cJSON_GetObjectItemCaseSensitive(parser, "auth_type");
+
+    if (!auth_type) {
+        printf("Failed to get auth_type. Aborting\n");
+        return 1; 
+    }
+
+    printf("auth type: %s\n", auth_type->valuestring);
+
+    if (strcmp(auth_type->valuestring, "IOTC_AT_X509") == STRINGS_ARE_EQUAL){
+        iotc_config->auth_info.type = IOTC_AT_X509;
+    } else if (strcmp(auth_type->valuestring, "IOTC_AT_SYMMETRIC_KEY") == STRINGS_ARE_EQUAL){
+        iotc_config->auth_info.type = IOTC_AT_SYMMETRIC_KEY;
+    } else if (strcmp(auth_type->valuestring, "IOTC_AT_TPM") == STRINGS_ARE_EQUAL) {
+        iotc_config->auth_info.type = IOTC_AT_TPM;
+    } else if (strcmp(auth_type->valuestring, "IOTC_AT_TOKEN") == STRINGS_ARE_EQUAL) {
+        iotc_config->auth_info.type = IOTC_AT_TOKEN;
+    } else {
+        printf("unsupported auth type. Aborting\r\n");
+        return 1;
+    }
+
+    if (cJSON_HasObjectItem(parser, "params") != true){
+        //TODO: not sure what to do?
+        return 1;
+    }
+
+    cJSON *auth_params_parser = NULL;
+
+    auth_params_parser = cJSON_GetObjectItem(parser, "params");
+
+    if (!auth_params_parser) {
+        printf("Failed to get auth_type. Aborting\n");
+        return 1; 
+    }
+
+    if (parse_auth_params(auth_params_parser, iotc_config) != 0){
+        printf("failed to parser auth params\r\n");
+        return 1;
+    }
+    
+
+    
+
+}
+
 //TODO: add error checking
 int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commands, sensors_data_t *local_sensors, char** board){
 
@@ -326,57 +415,33 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
         goto END;
     }
     
-    auth_type = cJSON_GetObjectItemCaseSensitive(json_parser, "auth_type");
+    cJSON *auth_parser = NULL;
 
-    if (!auth_type) {
-        printf("Failed to get auth_type. Aborting\n");
-        ret = 1; 
+    if (cJSON_HasObjectItem(json_parser, "auth") == true){
+
+        auth_parser = cJSON_GetObjectItem(json_parser, "auth");
+
+        if (!auth_parser){
+            ret = 1;
+            goto END;
+        }
+
+        if (parse_auth(auth_parser, iotc_config) != 0) {
+            printf("failed to parse auth object\r\n");
+            ret = 1;
+            goto END;
+        }
+
+
+
+    } else {
+        printf("No auth obj.\r\n");
+        // TODO: not sure what to do in this situation
+        ret = 1;
         goto END;
     }
 
-    printf("auth type: %s\n", auth_type->valuestring);
-
-    if (strcmp(auth_type->valuestring, "IOTC_AT_X509") == STRINGS_ARE_EQUAL){
-        iotc_config->auth_info.type = IOTC_AT_X509;
-    } else if (strcmp(auth_type->valuestring, "IOTC_AT_SYMMETRIC_KEY") == STRINGS_ARE_EQUAL){
-        iotc_config->auth_info.type = IOTC_AT_SYMMETRIC_KEY;
-    } else if (strcmp(auth_type->valuestring, "IOTC_AT_TPM") == STRINGS_ARE_EQUAL) {
-        iotc_config->auth_info.type = IOTC_AT_TPM;
-    } else if (strcmp(auth_type->valuestring, "IOTC_AT_TOKEN") == STRINGS_ARE_EQUAL) {
-        iotc_config->auth_info.type = IOTC_AT_TOKEN;
-    } else {
-        printf("unsupported auth type. Aborting\r\n");
-        ret = 1; 
-        goto END;
-    }
-
-    //return 1;
-    if (iotc_config->auth_info.type == IOTC_AT_X509){
-
-        if (cJSON_HasObjectItem(json_parser, "x509_certs") == true){
-            
-            
-            if (parse_x509_certs(json_parser, &iotc_config->auth_info.data.cert_info.device_key,&iotc_config->auth_info.data.cert_info.device_cert) != 0) {
-                printf("failed to parse x509 certs. Aborting\r\n");
-                return 1;
-            }
-        }
-
-    } else if (iotc_config->auth_info.type == IOTC_AT_SYMMETRIC_KEY) {
-        
-        if (cJSON_HasObjectItem(json_parser, "symmkey") == true){
-
-            if (parse_base_params(&iotc_config->auth_info.data.symmetric_key, "symmkey", json_parser) != 0){
-                printf("Failed to get duid from json file. Aborting.\r\n");
-                ret = 1; 
-                goto END;
-            }
-
-            printf("SYMMKEY: %s\r\n", iotc_config->auth_info.data.symmetric_key);
-        }
-    } else {
-        //TODO: placeholder for other auth types
-    }
+    
 
     cJSON *device_parser = NULL; 
 
