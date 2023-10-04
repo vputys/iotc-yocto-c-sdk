@@ -1,4 +1,4 @@
-SUMMARY = "Recipe that compiles and basic-sample"
+SUMMARY = "Recipe that compiles and deploys a telemetry demo"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -51,7 +51,7 @@ EOF
 
 do_install() {
     install -d ${D}${bindir}
-    install -m 0755 basic-sample-test ${D}${bindir}
+    install -m 0755 telemetry-demo ${D}${bindir}
 
     for f in ${WORKDIR}/eg-private-repo-data/*
     do
