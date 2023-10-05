@@ -1,11 +1,39 @@
 {
-    "duid": "your-duid",
-    "cpid": "your-cpid",
-    "env": "your-env",
-    "auth_type": "IOTC_AT_SYMMETRIC_KEY",
-    "symmkey": "your-symkey",
-    "sensor": {
-        "name": "Voyager-Sensor",
-        "path": "/tmp/voy2_kms"
+    "duid": "blue",
+    "cpid": "av",
+    "env": "avn",
+    "iotc_server_cert": "/etc/ssl/certs/server.pem",
+    "auth": {
+        "auth_type": "IOTC_AT_SYMMETRIC_KEY",
+        "params": {
+            "primary_key": "UN0TwIaNf4LOOQVt79t3rw=="
+        }
+    },
+    "device": {
+        "offline_storage": {
+            "available_space_MB": 1,
+            "file_count": 1
+        },
+        "name": "maaxboardt",
+        "commands": [
+            {
+                "name": "led",
+                "private_data": "/sys/class/leds/usr_led/brightness"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "power",
+                "private_data": "/home/file1",
+                "data_type": "int",
+                "default_value": "-1"
+            },
+            {
+                "name": "nonononono",
+                "private_data": "/home/file2",
+                "data_type": "int",
+                "default_value": "-1"
+            }
+        ]
     }
 }

@@ -1,14 +1,40 @@
 {
-    "duid": "your-duid",
-    "cpid": "your-cpid",
-    "env": "your-env",
-    "auth_type": "IOTC_AT_X509",
-    "x509_certs": {
-        "client_key": "/usr/local/iotc/client1-key.pem",
-        "client_cert": "/usr/local/iotc/client1.pem"
+    "duid": "SelfSigned",
+    "cpid": "a",
+    "env": "av",
+    "iotc_server_cert": "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem",
+    "auth": {
+        "auth_type": "IOTC_AT_X509",
+        "params": {
+            "client_key": "/usr/local/iotc/client1-key.pem",
+            "client_cert": "/usr/local/iotc/client1.pem"
+        }
     },
-    "sensor": {
-        "name": "Voyager-Sensor",
-        "path": "/tmp/voy2_kms"
+    "device": {
+        "offline_storage": {
+            "available_space_MB": 1,
+            "file_count": 1
+        },
+        "name": "maaxboardt",
+        "commands": [
+            {
+                "name": "led",
+                "private_data": "/sys/class/leds/usr_led/brightness"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "power",
+                "private_data": "/home/file1",
+                "data_type": "int",
+                "default_value": "-1"
+            },
+            {
+                "name": "nonononono",
+                "private_data": "/home/file2",
+                "data_type": "int",
+                "default_value": "-1"
+            }
+        ]
     }
 }
