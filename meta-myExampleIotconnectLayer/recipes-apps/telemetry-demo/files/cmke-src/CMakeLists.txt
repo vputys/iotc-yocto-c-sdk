@@ -9,7 +9,7 @@ add_subdirectory(${IOTC_C_SDK_DIR} SdkSources)
 
 include(GNUInstallDirs)
 
-include_directories(config PRIVATE ${IOTC_C_LIB_INCLUDE_DIR} ${IOTC_C_SDK_INCLUDE_DIR})
+include_directories(PRIVATE ${IOTC_C_LIB_INCLUDE_DIR} ${IOTC_C_SDK_INCLUDE_DIR})
 add_executable(telemetry-demo main.c)
 
 target_link_libraries(telemetry-demo iotc-c-generic-sdk)

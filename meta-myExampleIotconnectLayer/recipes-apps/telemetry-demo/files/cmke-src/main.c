@@ -11,8 +11,6 @@
 
 #include "json_parser.h"
 
-#include "app_config.h"
-
 // windows compatibility
 #if defined(_WIN32) || defined(_WIN64)
 #define F_OK 0
@@ -358,11 +356,6 @@ static bool string_ends_with(const char * needle, const char* haystack)
 }
 
 int main(int argc, char *argv[]) {
-    if (access(IOTCONNECT_SERVER_CERT, F_OK) != 0) {
-        fprintf(stderr, "Unable to access IOTCONNECT_SERVER_CERT. "
-               "Please change directory so that %s can be accessed from the application or update IOTCONNECT_CERT_PATH\n",
-               IOTCONNECT_SERVER_CERT);
-    }
 
     char* input_json_file = NULL;
 
@@ -474,36 +467,8 @@ int main(int argc, char *argv[]) {
 
     } else {
         
-
-        if (IOTCONNECT_AUTH_TYPE == IOTC_AT_X509) {
-            if (access(IOTCONNECT_IDENTITY_CERT, F_OK) != 0 ||
-                access(IOTCONNECT_IDENTITY_KEY, F_OK) != 0
-                    ) {
-                fprintf(stderr, "Unable to access device identity private key and certificate. "
-                    "Please change directory so that %s can be accessed from the application or update IOTCONNECT_CERT_PATH\n",
-                    IOTCONNECT_SERVER_CERT);
-            }
-        }
-
-        
-        config->cpid = IOTCONNECT_CPID;
-        config->env = IOTCONNECT_ENV;
-        config->duid = IOTCONNECT_DUID;
-        config->auth_info.type = IOTCONNECT_AUTH_TYPE;
-        config->auth_info.trust_store = IOTCONNECT_SERVER_CERT;
-
-        if (config->auth_info.type == IOTC_AT_X509) {
-            config->auth_info.data.cert_info.device_cert = IOTCONNECT_IDENTITY_CERT;
-            config->auth_info.data.cert_info.device_key = IOTCONNECT_IDENTITY_KEY;
-        } else if (config->auth_info.type == IOTC_AT_TPM) {
-            config->auth_info.data.scope_id = IOTCONNECT_SCOPE_ID;
-        } else if (config->auth_info.type == IOTC_AT_SYMMETRIC_KEY){
-            config->auth_info.data.symmetric_key = IOTCONNECT_SYMMETRIC_KEY;
-        } else if (config->auth_info.type != IOTC_AT_TOKEN) { // token type does not need any secret or info
-            // none of the above
-            fprintf(stderr, "IOTCONNECT_AUTH_TYPE is invalid\n");
-            return -1;
-        }
+        printf("json file path is mandatory in this version of basic sample. Aborting\r\n");
+        return 1;
     }
 
     config->status_cb = on_connection_status;
