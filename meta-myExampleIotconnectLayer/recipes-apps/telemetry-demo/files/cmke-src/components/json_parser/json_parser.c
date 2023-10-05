@@ -2,36 +2,73 @@
 
 #define STRINGS_ARE_EQUAL 0
 
-static int parse_x509_certs(const cJSON* json_parser, char** id_key, char** id_cert);
-static int parse_telemetry_settings(cJSON *json_parser, sensors_data_t *local_sensors);
+static int parse_attributes(cJSON *json_parser, sensors_data_t *local_sensors);
 static int parse_commands(cJSON *json_parser, commands_data_t *commands);
 static int parse_base_params(char** dest, char* json_src, cJSON* json_parser);
-static int parse_sensors(const cJSON* json_parser, sensors_data_t *sensors);
 static int parse_auth(cJSON *parser, IotConnectClientConfig* iotc_config);
 static int parse_auth_params(cJSON *parser, IotConnectClientConfig* iotc_config);
 
-static int parse_telemetry_settings(cJSON *json_parser, sensors_data_t *local_sensors){
+static int parse_attributes(cJSON *json_parser, sensors_data_t *sensors){
 
-    cJSON *telemetry_parser = NULL;
+    cJSON *attributes_parser = NULL;
     
-    telemetry_parser = cJSON_GetObjectItem(json_parser, "telemetry");
+    attributes_parser = cJSON_GetObjectItem(json_parser, "attributes");
 
-    if (!telemetry_parser) {
+    if (!attributes_parser) {
         printf("Failed to get telemetry obj.\r\n");
         return 1;
     }
 
+    cJSON *json_array_item = NULL;
 
-    //TODO; maybe rethink this
-    if (cJSON_HasObjectItem(telemetry_parser, "sensors") == true){
-        if (parse_sensors(telemetry_parser, local_sensors) != 0){
-            printf("failed to parse sensor. Aborting\r\n");
-            cJSON_Delete(telemetry_parser);
-        }
-        //printf("sensor data: name - %s; path - %s\r\n", sensor->s_name, sensor->s_path);
+    sensors->size = cJSON_GetArraySize(attributes_parser);
+
+    if (sensors->size <= 0) {
+        printf("Failed to get array size\r\n");
+        return 1;
     }
 
-    //cJSON_Delete(telemetry_parser);
+    sensors->sensor = calloc(sensors->size, sizeof(sensor_info_t));
+
+    if (!sensors->sensor){
+        printf("failed to allocate\r\n");
+        return 1;
+    }
+
+    for (int i = 0; i < sensors->size; i++){
+
+        json_array_item = cJSON_GetArrayItem(attributes_parser, i);
+
+        if (!json_array_item){
+            printf("Failed to access element %d of json sensor array\r\n", i);
+            return 1;
+        }
+
+        if (parse_base_params(&sensors->sensor[i].s_name, "name", json_array_item) != 0){
+            printf("Failed to get sensor name n%d from json file. Aborting.\r\n", i);
+            return 1;
+        }
+
+        if (parse_base_params(&sensors->sensor[i].s_path, "private_data", json_array_item) != 0){
+            printf("Failed to get sensor path n%d from json file. Aborting.\r\n", i);
+            return 1;
+        }
+
+        // PLACEHOLDER for data type and default value
+        /* 
+        if (parse_base_params(, "data_type", json_array_item) != 0){
+            printf("Failed to get sensor data type n%d from json file. Aborting.\r\n", i);
+            return 1;
+        }
+
+        if (parse_base_params(&, "default_value", json_array_item) != 0){
+            printf("Failed to get sensor default value n%d from json file. Aborting.\r\n", i);
+            return 1;
+        }
+        */
+
+    }
+
     return 0;
 
 }
@@ -145,138 +182,6 @@ static int parse_base_params(char** dest, char* json_src, cJSON* json_parser){
     return 0;
 }
 
-//TODO: add proper error checking
-static int parse_sensors(const cJSON* json_parser, sensors_data_t *sensors){
-
-    if (!json_parser || !sensors){
-        printf("NULL PTR. Aborting\r\n");
-        return 1;
-    }
-
-    cJSON *sensor_obj = NULL;
-
-    cJSON *device_name = NULL;
-    cJSON *device_path = NULL;
-
-    cJSON *json_array_item = NULL;
-
-    sensor_obj = cJSON_GetObjectItem(json_parser, "sensors");
-
-    if (!sensor_obj){
-        printf("Failed to get sensor object. Aborting\n");
-        cJSON_Delete(sensor_obj);
-        return 1;
-    }
-
-    sensors->size = cJSON_GetArraySize(sensor_obj);
-
-    if (sensors->size <= 0) {
-        printf("Failed to get array size\r\n");
-        return 1;
-    }
-
-    sensors->sensor = calloc(sensors->size, sizeof(sensor_info_t));
-
-    if (!sensors->sensor){
-        printf("failed to allocate\r\n");
-        return 1;
-    }
-
-    for (int i = 0; i < sensors->size; i++){
-
-        json_array_item = cJSON_GetArrayItem(sensor_obj, i);
-
-        if (!json_array_item){
-            printf("Failed to access element %d of json sensor array\r\n", i);
-            return 1;
-        }
-
-        if (parse_base_params(&sensors->sensor[i].s_name, "name", json_array_item) != 0){
-            printf("Failed to get sensor name n%d from json file. Aborting.\r\n", i);
-            return 1;
-        }
-
-        if (parse_base_params(&sensors->sensor[i].s_path, "path", json_array_item) != 0){
-            printf("Failed to get sensor path n%d from json file. Aborting.\r\n", i);
-            return 1;
-        }
-
-
-    }
-
-    return 0;
-}
-
-
-static int parse_x509_certs(const cJSON* json_parser, char** id_key, char** id_cert){
-
-    if (!json_parser){
-        printf("NULL PTR.\r\n");
-        return 1;
-    }
-
-    cJSON *x509_obj = NULL;
-    cJSON *x509_id_cert = NULL;
-    cJSON *x509_id_key = NULL; 
-    // ignoring auth type for now
-
-    x509_obj = cJSON_GetObjectItem(json_parser, "x509_certs");
-
-    if (!x509_obj){
-        printf("Failed to get x509 object. Aborting\n");
-        return 1;
-    }
-
-    printf("auth type: %s\n", x509_obj->valuestring);
-
-    
-
-    // TODO: add error checking
-    x509_id_cert = cJSON_GetObjectItemCaseSensitive(x509_obj, "client_cert");
-    x509_id_key = cJSON_GetObjectItemCaseSensitive(x509_obj, "client_key");
-
-    printf("id cert path: {%s}\n", x509_id_cert->valuestring);
-    printf("id key path: {%s}\n", x509_id_key->valuestring);
-
-
-    int key_len = 0;
-    key_len = strlen(x509_id_key->valuestring)*(sizeof(char));
-
-    int cert_len = 0;
-    cert_len = strlen(x509_id_cert->valuestring)*(sizeof(char));
-
-    printf("cert len: %d, key len: %d:\r\n",cert_len, key_len);
-
-    *id_cert = calloc(cert_len, sizeof(char));
-
-    if (!*id_cert){
-        printf("failed to malloc\r\n");
-        *id_cert = NULL;
-        return 1;
-    }
-
-
-    *id_key = calloc(key_len, sizeof(char));
-
-
-    if (!*id_key){
-        printf("failed to malloc\r\n");
-        *id_key = NULL;
-        return 1;
-    }
-
-
-    memcpy(*id_cert, x509_id_cert->valuestring, sizeof(char)*cert_len);
-
-    memcpy(*id_key, x509_id_key->valuestring, sizeof(char)*key_len);
-
-
-    id_cert[cert_len] = '\0';
-    id_key[key_len] = '\0';
-
-    return 0;
-}
-
 static int parse_auth_params(cJSON *parser, IotConnectClientConfig* iotc_config) {
 
 
@@ -311,6 +216,8 @@ static int parse_auth_params(cJSON *parser, IotConnectClientConfig* iotc_config)
         printf("placeholder auth type\r\n");
         break;
     }
+
+    return 0;
 
 }
 
@@ -359,7 +266,7 @@ static int parse_auth(cJSON *parser, IotConnectClientConfig* iotc_config){
         return 1;
     }
     
-
+    return 0;
     
 
 }
@@ -466,7 +373,7 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
         
 
 
-        if (parse_telemetry_settings(device_parser, local_sensors) != 0){
+        if (parse_attributes(device_parser, local_sensors) != 0){
             printf("Failed to parse telemetry settings\r\n");
             ret = 1; 
             goto END;
