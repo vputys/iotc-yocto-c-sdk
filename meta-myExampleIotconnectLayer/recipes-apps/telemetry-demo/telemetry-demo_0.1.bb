@@ -32,7 +32,6 @@ set( PC_CURL_LIBRARY_DIRS "${STAGING_LIBDIR}")
 set( IOTC_C_LIB_INCLUDE_DIR  "${STAGING_BASELIBDIR}/iotc-c-lib/include")
 set( IOTC_C_SDK_DIR  "${STAGING_DIR_TARGET}/iotc-generic-c-sdk")
 set( IOTC_C_SDK_INCLUDE_DIR  "${STAGING_DIR_TARGET}/iotc-generic-c-sdk/include")
-set( IOTC_C_SDK_CJSON_INCLUDE "${STAGING_BASELIBDIR}/cJSON")
 #find_package(CURL REQUIRED)
 EOF
 }
