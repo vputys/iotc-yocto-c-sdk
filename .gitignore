@@ -54,4 +54,3 @@ dkms.conf
 # Private data, certificates etc
 *.pem
 *.csr
-**/eg-private-repo-data/*
