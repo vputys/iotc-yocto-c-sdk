@@ -2,10 +2,32 @@
     "duid": "your-duid",
     "cpid": "your-cpid",
     "env": "your-env",
-    "auth_type": "IOTC_AT_SYMMETRIC_KEY",
-    "symmkey": "your-symkey",
-    "sensor": {
-        "name": "Voyager-Sensor",
-        "path": "/tmp/voy2_kms"
+    "iotc_server_cert": "/etc/ssl/certs/DigiCert_Global_Root_G2.pem",
+    "auth": {
+        "auth_type": "IOTC_AT_SYMMETRIC_KEY",
+        "params": {
+            "primary_key": "your-symmkey=="
+        }
+    },
+    "device": {
+        "name": "maaxboardt",
+        "commands": [
+            {
+                "name": "led",
+                "private_data": "/path/to/file"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "sensor1",
+                "private_data": "/path/to/file",
+                "private_data_type": "binary"
+            },
+            {
+                "name": "sensor2",
+                "private_data": "/path/to/file",
+                "private_data_type": "ascii"
+            }
+        ]
     }
 }

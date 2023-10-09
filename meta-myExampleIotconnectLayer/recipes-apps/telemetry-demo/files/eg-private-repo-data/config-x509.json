@@ -2,13 +2,33 @@
     "duid": "your-duid",
     "cpid": "your-cpid",
     "env": "your-env",
-    "auth_type": "IOTC_AT_X509",
-    "x509_certs": {
-        "client_key": "/usr/local/iotc/client1-key.pem",
-        "client_cert": "/usr/local/iotc/client1.pem"
+    "iotc_server_cert": "/etc/ssl/certs/DigiCert_Global_Root_G2.pem",
+    "auth": {
+        "auth_type": "IOTC_AT_X509",
+        "params": {
+            "client_key": "/path/to/your/cl-key.pem",
+            "client_cert": "/path/to/your/cl-crt.pem"
+        }
     },
-    "sensor": {
-        "name": "Voyager-Sensor",
-        "path": "/tmp/voy2_kms"
+    "device": {
+        "name": "maaxboardt",
+        "commands": [
+            {
+                "name": "led",
+                "private_data": "/path/to/file"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "sensor1",
+                "private_data": "/path/to/file",
+                "private_data_type": "binary"
+            },
+            {
+                "name": "sensor2",
+                "private_data": "/path/to/file",
+                "private_data_type": "ascii"
+            }
+        ]
     }
 }
