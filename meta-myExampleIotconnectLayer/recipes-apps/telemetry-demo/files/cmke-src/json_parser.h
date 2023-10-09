@@ -11,10 +11,24 @@
 
 #undef COMMAND_FUNCTION_PTR_PARSING
 
+typedef enum file_read_mode {
+    FMODE_ASCII = 0,
+    FMODE_BIN = 1,
+    FMODE_END
+} file_read_mode_t;
+
+typedef union reading_un
+{
+    int reading_int;
+    char* reading_str;
+} reading_un_t;
+
 typedef struct sensor_info {
     char* s_name;
     char* s_path;
-    int reading;
+    file_read_mode_t mode;
+    void* reading;
+    
 } sensor_info_t;
 
 typedef struct sensors_data {

@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "iotconnect_common.h"
 #include "iotconnect.h"
 #include "cJSON.h"
@@ -178,10 +181,30 @@ static void publish_telemetry(sensors_data_t sensors) {
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
     iotcl_telemetry_add_with_iso_time(msg, iotcl_iso_timestamp_now());
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
-    iotcl_telemetry_set_number(msg, "cpu", 3.123); // test floating point numbers
+    iotcl_telemetry_set_number(msg, "cpu", 3.123123); // test floating point numbers
     
+
     for (int i = 0; i < sensors.size; i++){
-        iotcl_telemetry_set_number(msg, sensors.sensor[i].s_name, sensors.sensor[i].reading);
+
+        if (sensors.sensor[i].reading){
+        switch (sensors.sensor[i].mode)
+            {
+            case FMODE_ASCII:
+
+                iotcl_telemetry_set_string(msg, sensors.sensor[i].s_name, (char*)sensors.sensor[i].reading);
+                break;
+            case FMODE_BIN:
+
+                // TODO: we might get inacurate readings (for numbers with decimal points) with IEEE floats and doubles 
+                iotcl_telemetry_set_number(msg, sensors.sensor[i].s_name, *(float*)sensors.sensor[i].reading);
+                break;
+            case FMODE_END:
+            default:
+                printf("Unsupported read mode. Skipping\r\n");
+                break;
+            }
+        }
+        
     }
 
     const char *str = iotcl_create_serialized_string(msg, false);
@@ -261,6 +284,10 @@ static void free_sensor_data(sensors_data_t *sensors) {
             sensors->sensor[i].s_path = NULL;
         }
 
+        if (sensors->sensor[i].reading){
+            free(sensors->sensor[i].reading);
+            sensors->sensor[i].reading = NULL;
+        }
 
     }
 
@@ -318,35 +345,138 @@ static void free_iotc_config(IotConnectClientConfig* iotc_config) {
 
 }
 
+static long get_file_length(FILE* fd){
+    
+    if (!fd){
+        printf("NULL PTR\r\n");
+        return -1;
+    }
 
-// TODO: currently will only read first 5 characters from specified file
-static int read_sensor(sensor_info_t sensor_data){
+    fseek(fd, 0l, SEEK_END);
+    long file_len = ftell(fd);
 
-    char buff[6];
+    if (file_len <= 0){
+        printf("failed calculating file length: %ld. Aborting\n", file_len);
+        return -1;
+    }
 
-    if(access(sensor_data.s_path, F_OK) != 0){
-        printf("failed to access sensor file - %s ; Aborting\n", sensor_data.s_path);
+    rewind(fd);
+
+    return file_len;
+    
+}
+
+
+// TODO: currently returns only floats, idk if that's required atm
+static int read_sensor_ascii(sensor_info_t *sensor_data){
+
+    if(access(sensor_data->s_path, F_OK) != 0){
+        printf("failed to access sensor file - %s ; Aborting\n", sensor_data->s_path);
         return 1;
     }
 
+    
     FILE* fd = NULL;
-    int reading = 0;
 
-        
-    fd = fopen(sensor_data.s_path, "r");
+    fd = fopen(sensor_data->s_path, "r");
 
-    //TODO: magic number
-    for (int i = 0; i < 5; i++){
-        buff[i] = fgetc(fd);
+    long file_len = 0;
+    file_len = get_file_length(fd);
+
+    if (file_len <= 0){
+        printf("failed to calculate file len.\r\n");
+        fclose(fd);
+        return -1;
     }
 
-    buff[5] = '\0';
+    char *buff = (char*)calloc(file_len+1, sizeof(char));
+
+    if (!buff){
+        printf("failed to calloc\r\n");
+        fclose(fd);
+        return -1;
+    }
+    float reading = 0;
+
+    size_t read_n = 0;
+    read_n = fread((void*)buff, sizeof(char), file_len, fd);
 
     fclose(fd);
 
-    reading = (int)atof(buff);
+    reading = (float)atof(buff);
 
-    return reading;
+    if (sensor_data->reading){
+        free(sensor_data->reading);
+        sensor_data->reading = NULL;
+    }
+
+    sensor_data->reading = strdup(buff);
+
+    free(buff);
+
+    buff = NULL;
+    return 0;
+}
+
+static float read_sensor_raw(sensor_info_t *sensors_data){
+
+    if(access(sensors_data->s_path, F_OK) != 0){
+        printf("failed to access sensor file - %s ; Aborting\n", sensors_data->s_path);
+        return 1;
+    }
+
+    FILE *fd = fopen(sensors_data->s_path, "rb");
+    if (!fd)
+    {
+        printf("File failed to open - %s", sensors_data->s_path);
+        return EXIT_FAILURE;
+    }
+    
+    long file_len = 0;
+    file_len = get_file_length(fd);
+
+    if (file_len <= 0){
+        printf("failed to calculate file len.\r\n");
+        fclose(fd);
+        return -1;
+    }
+
+
+    float reading = 0;
+
+    size_t read_n;
+
+    // ASSUMING WE'RE READING FLOATS
+
+    __uint16_t req_size = 0;
+ 
+    req_size = file_len/sizeof(float);
+    void* buff = (void*)calloc(req_size, sizeof(float));
+
+    read_n = fread(buff, sizeof(float), req_size, fd);
+    
+    if (read_n != req_size){
+        printf("warning - read size if different from the required in file %s\r\n", sensors_data->s_path);
+    }
+
+    fclose(fd);
+
+    reading = *(float*)buff;
+
+    if (buff){
+        free(buff);
+        buff = NULL;
+    }
+
+    if (sensors_data->reading){
+        free(sensors_data->reading);
+        sensors_data->reading = NULL;
+    }
+    sensors_data->reading = (float*)malloc(sizeof(float));
+    
+    *(float*)sensors_data->reading = reading;
+
+    return 0;
 }
 
 static bool string_ends_with(const char * needle, const char* haystack)
@@ -413,7 +543,7 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < file_len; i++){
             json_str[i] = fgetc(fd);
         }
-        //printf ("end str: \n%s\n", json_str);
+
 
         fclose(fd);
 
@@ -488,10 +618,33 @@ int main(int argc, char *argv[]) {
 
         // send 10 messages
         for (int i = 0; iotconnect_sdk_is_connected() && i < 10; i++) {
+
             for (int i = 0; i < local_data.sensors.size; i++){
-                local_data.sensors.sensor[i].reading = read_sensor(local_data.sensors.sensor[i]);
+    
+
+                switch (local_data.sensors.sensor[i].mode)
+                {
+                case FMODE_ASCII:
+
+                    if (read_sensor_ascii(&local_data.sensors.sensor[i]) != 0){
+                        printf("failed to read data from file in ascii mode\r\n");
+                    }
+                    break;
+                case FMODE_BIN:
+                    
+                    if (read_sensor_raw(&local_data.sensors.sensor[i]) != 0){
+                        printf("failed to read data from file in binary mode\r\n");
+                    }
+
+                    break;
+                case FMODE_END:
+                default:
+                    printf("Unsupported read mode. Skipping\r\n");
+                    break;
+                }
+        
+
             }
-                
             publish_telemetry(local_data.sensors);
             // repeat approximately evey ~5 seconds
             for (int k = 0; k < 500; k++) {

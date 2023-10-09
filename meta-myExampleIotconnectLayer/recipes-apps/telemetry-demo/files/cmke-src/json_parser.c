@@ -34,7 +34,7 @@ static int parse_attributes(cJSON *json_parser, sensors_data_t *sensors){
         printf("failed to allocate\r\n");
         return 1;
     }
-
+    char* read_mode;
     for (int i = 0; i < sensors->size; i++){
 
         json_array_item = cJSON_GetArrayItem(attributes_parser, i);
@@ -53,20 +53,24 @@ static int parse_attributes(cJSON *json_parser, sensors_data_t *sensors){
             printf("Failed to get sensor path n%d from json file. Aborting.\r\n", i);
             return 1;
         }
-
-        // PLACEHOLDER for data type and default value
-        /* 
-        if (parse_base_params(, "data_type", json_array_item) != 0){
-            printf("Failed to get sensor data type n%d from json file. Aborting.\r\n", i);
+        
+        
+        if (parse_base_params(&read_mode, "private_data_type", json_array_item) != 0){
+            printf("Failed to get sensor private data type n%d from json file. Aborting.\r\n", i);
             return 1;
         }
 
-        if (parse_base_params(&, "default_value", json_array_item) != 0){
-            printf("Failed to get sensor default value n%d from json file. Aborting.\r\n", i);
+
+        if (strcmp(read_mode, "ascii") == STRINGS_ARE_EQUAL){
+            sensors->sensor[i].mode = FMODE_ASCII;
+        } else if (strcmp(read_mode, "binary") == STRINGS_ARE_EQUAL){
+            sensors->sensor[i].mode = FMODE_BIN;
+        } else {
+            printf("failed to determine read mode: %s\r\n", read_mode);
+            sensors->sensor[i].mode = FMODE_END;
             return 1;
         }
-        */
-
+        free(read_mode);
     }
 
     return 0;
@@ -370,15 +374,14 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
             ret = 1; 
             goto END;
         }
-        
 
-
-        if (parse_attributes(device_parser, local_sensors) != 0){
-            printf("Failed to parse telemetry settings\r\n");
-            ret = 1; 
-            goto END;
+        if (cJSON_HasObjectItem(device_parser, "attributes") == true){
+            if (parse_attributes(device_parser, local_sensors) != 0){
+                printf("Failed to parse telemetry settings\r\n");
+                ret = 1; 
+                goto END;
+            }
         }
-
         if (cJSON_HasObjectItem(device_parser, "commands") == true){
 
             if (parse_commands(device_parser, local_commands) != 0){
@@ -389,8 +392,6 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
 
         //printf("sensor data: name - %s; path - %s\r\n", sensor->s_name, sensor->s_path);
         }
-
-
     }
 
 END: 

@@ -1,39 +1,33 @@
 {
-    "duid": "SelfSigned",
-    "cpid": "a",
-    "env": "av",
-    "iotc_server_cert": "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem",
+    "duid": "your-duid",
+    "cpid": "your-cpid",
+    "env": "your-env",
+    "iotc_server_cert": "/etc/ssl/certs/DigiCert_Global_Root_G2.pem",
     "auth": {
         "auth_type": "IOTC_AT_X509",
         "params": {
-            "client_key": "/usr/local/iotc/client1-key.pem",
-            "client_cert": "/usr/local/iotc/client1.pem"
+            "client_key": "/path/to/your/cl-key.pem",
+            "client_cert": "/path/to/your/cl-crt.pem"
         }
     },
     "device": {
-        "offline_storage": {
-            "available_space_MB": 1,
-            "file_count": 1
-        },
         "name": "maaxboardt",
         "commands": [
             {
                 "name": "led",
-                "private_data": "/sys/class/leds/usr_led/brightness"
+                "private_data": "/path/to/file"
             }
         ],
         "attributes": [
             {
-                "name": "power",
-                "private_data": "/home/file1",
-                "data_type": "int",
-                "default_value": "-1"
+                "name": "sensor1",
+                "private_data": "/path/to/file",
+                "private_data_type": "binary"
             },
             {
-                "name": "nonononono",
-                "private_data": "/home/file2",
-                "data_type": "int",
-                "default_value": "-1"
+                "name": "sensor2",
+                "private_data": "/path/to/file",
+                "private_data_type": "ascii"
             }
         ]
     }
