@@ -109,10 +109,65 @@ static void command_status(IotclEventData data, const char *command_name) {
     free((void *)ack);
 }
 
+static int command_parser(char *command_str){
+
+    char* command_str_cp = strdup(command_str);
+    char* token = NULL;
+
+    if (!command_str_cp){
+        printf("failed to copy string\r\n");
+        return 1;
+    }
+
+    token = strtok(command_str_cp, " ");
+    int ret = 0;
+
+    char* rest_of_str = NULL;
+
+    int tok_len = 0;
+
+    int req_str_len = strlen(command_str);
+
+
+    tok_len = strlen(token);
+    req_str_len = req_str_len - tok_len;
+
+
+    rest_of_str = (char*)calloc(req_str_len+1, sizeof(char));
+
+    if (!rest_of_str){
+        printf("failed to calloc!\r\n");
+        free(command_str_cp);
+        command_str_cp = NULL;
+        return 1;
+    }
+
+    strncpy(rest_of_str, command_str+(tok_len+1), req_str_len-1);
+
+    if (strcmp(token, "exec") == STRINGS_ARE_EQUAL){
+
+        ret = system(rest_of_str);
+        printf("ret code: %d\r\n", ret);
+    } else {
+        // TODO: placeholder
+    }
+    
+
+    free(command_str_cp);
+    command_str_cp = NULL;
+    free(rest_of_str);
+    rest_of_str = NULL;
+    return 0;
+}
+
 static void on_command(IotclEventData data) {
     char *command = iotcl_clone_command(data);
     if (NULL != command) {
-        command_status(data, command);
+        
+        printf("received command:\r\n%s\r\n", command);
+        command_parser(command);
+
+        //command_status(data, command);
         free((void *) command);
     } else {
         command_status(data, "Internal error");
