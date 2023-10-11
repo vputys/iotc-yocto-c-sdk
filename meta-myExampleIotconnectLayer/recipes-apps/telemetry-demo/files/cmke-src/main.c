@@ -60,6 +60,8 @@ const char *command_strings[] = {
 typedef struct local_data {
 
     char* board_name;
+    char* scripts_list;
+    char* scripts_path;
     sensors_data_t sensors;
     commands_data_t commands;
 
@@ -109,6 +111,86 @@ static void command_status(IotclEventData data, const char *command_name) {
     free((void *)ack);
 }
 
+static int find_scripts(){
+
+    if (!local_data.scripts_list){
+        printf("no scripts dir");
+        return 1;
+    }
+
+    FILE *fd = NULL;
+
+    fd = fopen(local_data.scripts_list, "r");
+
+    if (!fd){
+        printf("Failed to open scripts list file %s\r\n", local_data.scripts_list);
+        return 1;
+    }
+
+    char line[MAX_SCRIPT_NAME_LENGTH];
+
+    int counter = 0;
+
+    while(!feof(fd)){
+        fgets(line, MAX_SCRIPT_NAME_LENGTH, fd);
+        printf("read line: %s\r\n", line);
+        local_data.commands.scripts_counter++;
+
+    }
+
+    rewind(fd);
+    
+    printf("Found %d accepted scripts\r\n", local_data.commands.scripts_counter);
+
+    if (local_data.commands.scripts_counter == 0){
+        printf("no accepted script commands\r\n");
+        fclose(fd);
+        return 0;
+    }
+
+    local_data.commands.scripts = (scripts_data_t*)calloc(local_data.commands.scripts_counter, sizeof(scripts_data_t));
+
+    if (!local_data.commands.scripts){
+        printf("Failed to calloc \r\n");
+        fclose(fd);
+        return 1;
+    }
+
+    for (int i = 0; i < local_data.commands.scripts_counter; i++){
+        fgets(line, MAX_SCRIPT_NAME_LENGTH, fd);
+        strncpy(local_data.commands.scripts[i].script_name, line, MAX_SCRIPT_NAME_LENGTH);
+        printf("Copied line: %s\r\n", local_data.commands.scripts[i].script_name);
+        
+        // replacing \n with \0
+        if (local_data.commands.scripts[i].script_name[strlen(local_data.commands.scripts[i].script_name)-1] == '\n'){
+            local_data.commands.scripts[i].script_name[strlen(local_data.commands.scripts[i].script_name)-1] = '\0';
+        }
+        
+
+        printf("Copied line after trim: %s\r\n", local_data.commands.scripts[i].script_name);
+    }
+    fclose(fd);
+
+}
+
+static int find_script_in_file(char* req_script){
+
+    if (!local_data.scripts_list){
+        printf("no scripts dir");
+        return 1;
+    }
+
+    for (int i = 0; i < local_data.commands.scripts_counter; i++){
+        printf("comparing {%s} with {%s}\r\n", req_script, local_data.commands.scripts[i].script_name);
+        if (strcmp(req_script, local_data.commands.scripts[i].script_name) == STRINGS_ARE_EQUAL){
+            printf("script %s found\r\n", req_script);
+            return 0;
+        }
+    }
+    
+    return 1;
+}
+
 static int command_parser(char *command_str){
 
     char* command_str_cp = strdup(command_str);
@@ -120,7 +202,7 @@ static int command_parser(char *command_str){
     }
 
     token = strtok(command_str_cp, " ");
-    int ret = 0;
+    int ret = 1;
 
     char* rest_of_str = NULL;
 
@@ -146,8 +228,26 @@ static int command_parser(char *command_str){
 
     if (strcmp(token, "exec") == STRINGS_ARE_EQUAL){
 
-        ret = system(rest_of_str);
-        printf("ret code: %d\r\n", ret);
+        token = strtok(NULL, " ");
+
+
+        printf("token2 :%s;\r\n", token);
+        if (find_script_in_file(token) != 0){
+            printf("Failed to find script %s\r\n", token);
+        } else {
+
+            char* concat_str = NULL;
+
+            concat_str = (char*)calloc((strlen(rest_of_str)+strlen(local_data.scripts_path)), sizeof(char));
+            strcat(concat_str, local_data.scripts_path);
+            printf("concat: %s\r\n", concat_str);
+            strcat(concat_str, rest_of_str);
+            printf("concat %s\r\n", concat_str);
+            ret = system(concat_str);
+            printf("ret code: %d\r\n", ret);    
+        }
+
+        
     } else {
         // TODO: placeholder
     }
@@ -157,7 +257,7 @@ static int command_parser(char *command_str){
     command_str_cp = NULL;
     free(rest_of_str);
     rest_of_str = NULL;
-    return 0;
+    return ret;
 }
 
 static void on_command(IotclEventData data) {
@@ -318,6 +418,21 @@ static void free_local_data() {
     if (local_data.board_name){
         free(local_data.board_name);
         local_data.board_name = NULL;
+    }
+    
+    if (local_data.scripts_list){
+        free(local_data.scripts_list);
+        local_data.scripts_list = NULL;
+    }
+
+    if (local_data.scripts_path) {
+        free(local_data.scripts_path);
+        local_data.scripts_path = NULL;
+    }
+
+    if (local_data.commands.scripts){
+        free(local_data.commands.scripts);
+        local_data.commands.scripts = NULL;
     }
 
     free_sensor_data(&local_data.sensors);
@@ -554,6 +669,8 @@ int main(int argc, char *argv[]) {
     if (argc == 2) {
         // assuming only 1 parameters for now
         local_data.commands.counter = 0;
+        local_data.sensors.size = 0;
+        local_data.commands.scripts_counter = 0;
 
         if (!string_ends_with(".json", argv[1]))
         {
@@ -602,7 +719,7 @@ int main(int argc, char *argv[]) {
 
         fclose(fd);
 
-        if (parse_json_config(json_str, config, &local_data.commands, &local_data.sensors, &local_data.board_name) != 0) {
+        if (parse_json_config(json_str, config, &local_data.commands, &local_data.sensors, &local_data.board_name, &local_data.scripts_list) != 0) {
             printf("Failed to parse input JSON file. Aborting\n");
             if (json_str != NULL) {
                 free(json_str);
@@ -614,7 +731,62 @@ int main(int argc, char *argv[]) {
 
             return 1;
         }
+        printf("scripts: %s\r\n", local_data.scripts_list);
+
+        char* list_dup = NULL;
+
+        list_dup = strdup(local_data.scripts_list);
+        printf("list_dup: %s\r\n", list_dup);
+
+        char* token = NULL;
+
+        int cnt = 0;
+        for (int i = 0; i < strlen(list_dup); i++){
+            if (list_dup[i] == '/')
+                cnt++;
+        }
+        printf("cnt:%d\r\n",cnt);
+        local_data.scripts_path = NULL;
         
+        token = strtok(list_dup, "/");
+
+        // +2 to create enough space for / at the beginning and end of 1st token
+        local_data.scripts_path = (char*)calloc(strlen(token)+2, sizeof(char));
+        memcpy(local_data.scripts_path, "/", sizeof("/"));
+        size_t data_len = 1;
+        //printf("local_data.scripts_path:%s\r\n", local_data.scripts_path);
+        for (int i = 0; i < cnt-1; i++){
+            printf("i %d\r\n", i);
+
+            memcpy((char*)local_data.scripts_path+data_len, token, sizeof(char)*strlen(token));
+            data_len += sizeof(char)*strlen(token);
+
+            memcpy((char*)local_data.scripts_path+data_len, "/", sizeof(char)*strlen("/"));
+            data_len += sizeof(char)*strlen("/");
+
+            //strcat(local_data.scripts_path, token);
+            //strcat(local_data.scripts_path, "/");
+            printf("local_data.scripts_path:%s\r\n", local_data.scripts_path);
+            token = strtok(NULL, "/");
+            if (token){
+                printf("len tok:%d\r\n", strlen(token));
+                printf("tok: {%s}\r\n", token);
+                if (strlen(token) > 0){
+                    local_data.scripts_path = (char*)realloc(local_data.scripts_path, (sizeof(char)* ( (strlen(token)+1) + (strlen(local_data.scripts_path)) ) ));
+                }
+            } else {
+                printf("Token is null\r\n");
+            }
+        }
+        printf("here\r\n");
+        free(list_dup);
+
+
+        printf("board: %s\r\n", local_data.board_name);
+        if (find_scripts() != 0){
+            printf("FAIL");
+        }
+
         printf("DUID in main: %s\r\n", config->duid);
 
         

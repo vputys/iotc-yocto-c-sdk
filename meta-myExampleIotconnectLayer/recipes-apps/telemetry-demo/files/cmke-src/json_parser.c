@@ -276,7 +276,7 @@ static int parse_auth(cJSON *parser, IotConnectClientConfig* iotc_config){
 }
 
 //TODO: add error checking
-int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commands, sensors_data_t *local_sensors, char** board){
+int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config, commands_data_t *local_commands, sensors_data_t *local_sensors, char** board, char** scripts_path){
 
     if (!json_str){
         printf("NULL PTR. Aborting\n");
@@ -369,7 +369,7 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
 
 
         
-        if (parse_base_params(&board, "name", device_parser) != 0) {
+        if (parse_base_params(board, "name", device_parser) != 0) {
             printf("failed to get board name\r\n");
             ret = 1; 
             goto END;
@@ -383,6 +383,13 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
             }
         }
         if (cJSON_HasObjectItem(device_parser, "commands") == true){
+
+            if (parse_base_params(scripts_path, "scripts_path", device_parser) != 0) {
+                printf("failed to parse scripts path. Aborting\r\n");
+                ret = 1; 
+                goto END;
+            }
+
 
             if (parse_commands(device_parser, local_commands) != 0){
                 printf("failed to parse commands. Aborting\r\n");

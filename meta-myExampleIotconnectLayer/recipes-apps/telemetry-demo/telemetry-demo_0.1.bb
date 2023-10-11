@@ -10,6 +10,7 @@ PROVIDES = "${PN} ${PN}-dev"
 
 SRC_URI = "file://cmke-src; \
 file://eg-private-repo-data \
+file://scripts \
 "
 
 SRCREV_FORMAT="machine_meta"
@@ -24,6 +25,7 @@ PACKAGES = "${PN} ${PN}-dev ${PN}-dbg ${PN}-staticdev"
 PRIVATE_DATA_DIR = "${base_prefix}/usr/local/iotc"
 
 FILES:${PN}-dev = "${PRIVATE_DATA_DIR}/* \
+${PRIVATE_DATA_DIR}/scripts/* \
 "
 
 cmake_do_generate_toolchain_file:append() {
@@ -52,4 +54,15 @@ do_install() {
             install -m 0755 $f ${D}${PRIVATE_DATA_DIR}/
         fi
     done
+
+    for f in ${WORKDIR}/scripts/*
+    do
+        if [ -f $f ]; then
+            if [ ! -d ${D}${PRIVATE_DATA_DIR}/scripts ]; then
+                install -d ${D}${PRIVATE_DATA_DIR}/scripts
+            fi
+            install -m 0755 $f ${D}${PRIVATE_DATA_DIR}/scripts/
+        fi
+    done
+
 }

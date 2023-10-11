@@ -11,6 +11,7 @@
     },
     "device": {
         "name": "maaxboardt",
+        "scripts_path": "/usr/local/iotc/scripts/scripts_list",
         "commands": [
             {
                 "name": "led",
