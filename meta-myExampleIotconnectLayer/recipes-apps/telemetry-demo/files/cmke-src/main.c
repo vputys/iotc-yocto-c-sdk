@@ -225,38 +225,71 @@ static int command_parser(char *command_str){
     }
 
     strncpy(rest_of_str, command_str+(tok_len+1), req_str_len-1);
+    
+    char* concat_str = NULL;
 
     if (strcmp(token, "exec") == STRINGS_ARE_EQUAL){
 
         token = strtok(NULL, " ");
 
-
-        printf("token2 :%s;\r\n", token);
+        // check command file list and run found script 
         if (find_script_in_file(token) != 0){
-            printf("Failed to find script %s\r\n", token);
-        } else {
+            printf("Failed to find script %s.\r\nExecuting {%s} directly \r\n", token, rest_of_str);
+            
+            ret = system(rest_of_str); 
 
-            char* concat_str = NULL;
+        } else { // simply run passed command with bash otherwise
 
             concat_str = (char*)calloc((strlen(rest_of_str)+strlen(local_data.scripts_path)), sizeof(char));
+            
+            if (!concat_str){
+                printf("failed to calloc\r\n");
+                ret = 1;
+                goto END;
+            }
+
             strcat(concat_str, local_data.scripts_path);
-            printf("concat: %s\r\n", concat_str);
             strcat(concat_str, rest_of_str);
-            printf("concat %s\r\n", concat_str);
-            ret = system(concat_str);
-            printf("ret code: %d\r\n", ret);    
+            ret = system(concat_str);    
         }
 
         
+    } else if (strcmp(token, "control-led.sh") == STRINGS_ARE_EQUAL) {
+
+        concat_str = (char*)calloc((strlen(command_str)+strlen(local_data.scripts_path)), sizeof(char));
+            
+        if (!concat_str){
+            printf("failed to calloc\r\n");
+            ret = 1;
+            goto END;
+        }
+
+        strcat(concat_str, local_data.scripts_path);
+        strcat(concat_str, command_str);
+
+        if (find_script_in_file(token) != 0){
+            printf("Failed to find script {%s} in script list file\r\n");
+            ret = 1;
+            goto END;
+        }
+
+        ret = system(concat_str);
+
     } else {
         // TODO: placeholder
     }
     
+END:
 
-    free(command_str_cp);
-    command_str_cp = NULL;
-    free(rest_of_str);
-    rest_of_str = NULL;
+    if (command_str){
+        free(command_str_cp);
+        command_str_cp = NULL;
+    }
+
+    if (rest_of_str){
+        free(rest_of_str);
+        rest_of_str = NULL;
+    }
     return ret;
 }
 
@@ -582,9 +615,11 @@ static int read_sensor_ascii(sensor_info_t *sensor_data){
 
     sensor_data->reading = strdup(buff);
 
-    free(buff);
-
-    buff = NULL;
+    if (buff){
+        free(buff);
+        buff = NULL;
+    }
+    
     return 0;
 }
 
@@ -731,12 +766,12 @@ int main(int argc, char *argv[]) {
 
             return 1;
         }
-        printf("scripts: %s\r\n", local_data.scripts_list);
+
 
         char* list_dup = NULL;
 
         list_dup = strdup(local_data.scripts_list);
-        printf("list_dup: %s\r\n", list_dup);
+
 
         char* token = NULL;
 
@@ -745,7 +780,7 @@ int main(int argc, char *argv[]) {
             if (list_dup[i] == '/')
                 cnt++;
         }
-        printf("cnt:%d\r\n",cnt);
+
         local_data.scripts_path = NULL;
         
         token = strtok(list_dup, "/");
@@ -754,7 +789,7 @@ int main(int argc, char *argv[]) {
         local_data.scripts_path = (char*)calloc(strlen(token)+2, sizeof(char));
         memcpy(local_data.scripts_path, "/", sizeof("/"));
         size_t data_len = 1;
-        //printf("local_data.scripts_path:%s\r\n", local_data.scripts_path);
+
         for (int i = 0; i < cnt-1; i++){
             printf("i %d\r\n", i);
 
@@ -764,13 +799,10 @@ int main(int argc, char *argv[]) {
             memcpy((char*)local_data.scripts_path+data_len, "/", sizeof(char)*strlen("/"));
             data_len += sizeof(char)*strlen("/");
 
-            //strcat(local_data.scripts_path, token);
-            //strcat(local_data.scripts_path, "/");
-            printf("local_data.scripts_path:%s\r\n", local_data.scripts_path);
+            
             token = strtok(NULL, "/");
             if (token){
-                printf("len tok:%d\r\n", strlen(token));
-                printf("tok: {%s}\r\n", token);
+            
                 if (strlen(token) > 0){
                     local_data.scripts_path = (char*)realloc(local_data.scripts_path, (sizeof(char)* ( (strlen(token)+1) + (strlen(local_data.scripts_path)) ) ));
                 }
@@ -778,7 +810,7 @@ int main(int argc, char *argv[]) {
                 printf("Token is null\r\n");
             }
         }
-        printf("here\r\n");
+
         free(list_dup);
 
 

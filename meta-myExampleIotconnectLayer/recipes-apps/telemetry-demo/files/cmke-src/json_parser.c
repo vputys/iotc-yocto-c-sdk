@@ -368,13 +368,13 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
 
 
 
-        
-        if (parse_base_params(board, "name", device_parser) != 0) {
-            printf("failed to get board name\r\n");
-            ret = 1; 
-            goto END;
+        if (cJSON_HasObjectItem(device_parser, "name") == true){ 
+            if (parse_base_params(board, "name", device_parser) != 0) {
+                printf("failed to get board name\r\n");
+                ret = 1; 
+                goto END;
+            }
         }
-
         if (cJSON_HasObjectItem(device_parser, "attributes") == true){
             if (parse_attributes(device_parser, local_sensors) != 0){
                 printf("Failed to parse telemetry settings\r\n");
@@ -382,22 +382,20 @@ int parse_json_config(const char* json_str, IotConnectClientConfig* iotc_config,
                 goto END;
             }
         }
+
+        if (parse_base_params(scripts_path, "commands_list_path", device_parser) != 0) {
+            printf("failed to parse scripts path. Aborting\r\n");
+            ret = 1; 
+            goto END;
+         }
+
         if (cJSON_HasObjectItem(device_parser, "commands") == true){
-
-            if (parse_base_params(scripts_path, "scripts_path", device_parser) != 0) {
-                printf("failed to parse scripts path. Aborting\r\n");
-                ret = 1; 
-                goto END;
-            }
-
 
             if (parse_commands(device_parser, local_commands) != 0){
                 printf("failed to parse commands. Aborting\r\n");
                 ret = 1; 
                 goto END;
             }
-
-        //printf("sensor data: name - %s; path - %s\r\n", sensor->s_name, sensor->s_path);
         }
     }
 
