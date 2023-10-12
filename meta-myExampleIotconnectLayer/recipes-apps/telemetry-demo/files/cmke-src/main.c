@@ -72,6 +72,7 @@ static local_data_t local_data = {0};
 #define DOES_COMMAND_MATCH(input_str, command_enum) (strncmp((input_str), command_strings[(command_enum)], strlen(command_strings[(command_enum)])) == STRINGS_ARE_EQUAL)
 
 static void free_sensor_data(sensors_data_t *sensors);
+bool string_ends_with(const char * needle, const char* haystack);
 
 // MOVE THIS LATER -afk
 static void publish_message(const char* key_str,const char* value_str);
@@ -92,11 +93,7 @@ static void on_connection_status(IotConnectConnectionStatus status) {
 }
 
 
-static void command_status(IotclEventData data, const char *command_name) {
-
-    int command_type = 0;
-
-    bool success = false;
+static void command_status(IotclEventData data, const char *command_name, bool success) {
 
     if (strcmp(command_name, "Internal error") == STRINGS_ARE_EQUAL){
         printf("Internal error (null ptr command)\r\n");
@@ -104,7 +101,7 @@ static void command_status(IotclEventData data, const char *command_name) {
 
     const char* message = success ? "OK" : "Failed_or_not_implemented";
 
-    const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
+    char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
     printf("command: %s status=%s: %s\n", command_name, success ? "OK" : "Failed", message);
     printf("Sent CMD ack: %s\n", ack);
     iotconnect_sdk_send_packet(ack);
@@ -133,7 +130,6 @@ static int find_scripts(){
 
     while(!feof(fd)){
         fgets(line, MAX_SCRIPT_NAME_LENGTH, fd);
-        printf("read line: %s\r\n", line);
         local_data.commands.scripts_counter++;
 
     }
@@ -159,15 +155,11 @@ static int find_scripts(){
     for (int i = 0; i < local_data.commands.scripts_counter; i++){
         fgets(line, MAX_SCRIPT_NAME_LENGTH, fd);
         strncpy(local_data.commands.scripts[i].script_name, line, MAX_SCRIPT_NAME_LENGTH);
-        printf("Copied line: %s\r\n", local_data.commands.scripts[i].script_name);
         
         // replacing \n with \0
         if (local_data.commands.scripts[i].script_name[strlen(local_data.commands.scripts[i].script_name)-1] == '\n'){
             local_data.commands.scripts[i].script_name[strlen(local_data.commands.scripts[i].script_name)-1] = '\0';
         }
-        
-
-        printf("Copied line after trim: %s\r\n", local_data.commands.scripts[i].script_name);
     }
     fclose(fd);
 
@@ -181,7 +173,7 @@ static int find_script_in_file(char* req_script){
     }
 
     for (int i = 0; i < local_data.commands.scripts_counter; i++){
-        printf("comparing {%s} with {%s}\r\n", req_script, local_data.commands.scripts[i].script_name);
+        //printf("comparing {%s} with {%s}\r\n", req_script, local_data.commands.scripts[i].script_name);
         if (strcmp(req_script, local_data.commands.scripts[i].script_name) == STRINGS_ARE_EQUAL){
             printf("script %s found\r\n", req_script);
             return 0;
@@ -193,16 +185,41 @@ static int find_script_in_file(char* req_script){
 
 static int command_parser(char *command_str){
 
+    int ret = 1;
+
     char* command_str_cp = strdup(command_str);
     char* token = NULL;
+    char* copy_ptr = &command_str[0];
+
 
     if (!command_str_cp){
         printf("failed to copy string\r\n");
         return 1;
     }
 
-    token = strtok(command_str_cp, " ");
-    int ret = 1;
+    int pos = 0;
+
+    // find position of first ' ' char in received command
+    for (int i = 0; i < strlen(command_str_cp); i++){
+        if (command_str_cp[i] == ' '){
+            pos = i;
+            break;
+        }
+    } 
+
+    token = (char*)calloc(pos+1, sizeof(char));
+
+    if (!token){
+        printf("failed to calloc\r\n");
+        goto END;
+    }
+
+    // fill token buffer with data from command up to 1st ' '
+    for (int i = 0; i < pos; i++){
+        token[i] = command_str_cp[i];
+    }
+    token[pos] = '\0';
+    
 
     char* rest_of_str = NULL;
 
@@ -219,9 +236,7 @@ static int command_parser(char *command_str){
 
     if (!rest_of_str){
         printf("failed to calloc!\r\n");
-        free(command_str_cp);
-        command_str_cp = NULL;
-        return 1;
+        goto END;
     }
 
     strncpy(rest_of_str, command_str+(tok_len+1), req_str_len-1);
@@ -230,42 +245,100 @@ static int command_parser(char *command_str){
 
     if (strcmp(token, "exec") == STRINGS_ARE_EQUAL){
 
-        token = strtok(NULL, " ");
+        int space_pos_new = 0;
 
-        // check command file list and run found script 
-        if (find_script_in_file(token) != 0){
-            printf("Failed to find script %s.\r\nExecuting {%s} directly \r\n", token, rest_of_str);
-            
-            ret = system(rest_of_str); 
+        // find position of 2nd ' ' 
+        for (int i = pos+1; i < strlen(command_str); i++){
 
-        } else { // simply run passed command with bash otherwise
+            if (command_str_cp[i] == ' ' || command_str_cp[i] == '\0'){
+                space_pos_new = i;
+                break;
+            }
+        }
 
-            concat_str = (char*)calloc((strlen(rest_of_str)+strlen(local_data.scripts_path)), sizeof(char));
-            
-            if (!concat_str){
-                printf("failed to calloc\r\n");
-                ret = 1;
+        free(token);
+        token = NULL;
+
+        // assuming .sh scripts will require at least 1 parameter (thus more than 1 space in original command). if not - this needs to be reworked 
+        if (space_pos_new != 0){
+
+            token = (char*)calloc((space_pos_new - pos) +1, sizeof(char));
+        
+            if (!token){
+                printf("Faield to calloc\r\n");
                 goto END;
             }
 
-            strcat(concat_str, local_data.scripts_path);
-            strcat(concat_str, rest_of_str);
-            ret = system(concat_str);    
+            // calculating length of 2nd token
+            int new_len = space_pos_new - pos - 1;
+
+            for (int i = 0; i < new_len; i++){
+                token[i] = command_str_cp[(pos+1)+i]; // pos+1 to account for offset (1st token) 
+            }        
+            token[space_pos_new] = '\0';
+            
+        } else {
+
+            token = (char*)calloc(req_str_len+1, sizeof(char));
+
+            if (!token){
+                
+                printf("Faield to calloc\r\n");
+                goto END;
+            }
+
+            strncpy(token, req_str_len, req_str_len);
+
+        }
+        //printf("NEWEST token {%s}\r\n", token);
+        
+
+        if (string_ends_with(".sh", token)){
+
+            // check command file list and run found script 
+            if (find_script_in_file(token) != 0){
+                // if we'd need to allow runnin ANY scripts - this if section needs to be filled, so - PLACEHOLDER
+                printf("Failed to find script {%s}", token);
+                
+                
+            } else {
+
+                // allocate enough memory to include script folder path (derived from initial json parsing) + command (except 1st token) 
+                concat_str = (char*)calloc((strlen(rest_of_str)+strlen(local_data.scripts_path))+1, sizeof(char));
+                
+                if (!concat_str){
+                    printf("failed to calloc\r\n");
+                    ret = 1;
+                    goto END;
+                }
+
+                memcpy(concat_str, local_data.scripts_path, strlen(local_data.scripts_path));
+                memcpy(concat_str+(strlen(local_data.scripts_path)*sizeof(char)), rest_of_str, strlen(rest_of_str));
+                
+                // this runs bash
+                ret = system(concat_str); 
+            }
+        } else { // run passed command as bash without string alterations
+
+            ret = system(rest_of_str);    
         }
 
         
-    } else if (strcmp(token, "control-led.sh") == STRINGS_ARE_EQUAL) {
+    } else if (strcmp(token, "echo") == STRINGS_ARE_EQUAL) {
+        printf("%s\r\n", rest_of_str);
+    } else { // assuming that all other cases would be an attempt to run one of the predefines scripts
 
-        concat_str = (char*)calloc((strlen(command_str)+strlen(local_data.scripts_path)), sizeof(char));
-            
+        
+        concat_str = (char*)calloc((strlen(command_str)+strlen(local_data.scripts_path))+1, sizeof(char));
+        
         if (!concat_str){
             printf("failed to calloc\r\n");
             ret = 1;
             goto END;
         }
 
-        strcat(concat_str, local_data.scripts_path);
-        strcat(concat_str, command_str);
+        memcpy(concat_str, local_data.scripts_path, strlen(local_data.scripts_path));
+        memcpy(concat_str+(strlen(local_data.scripts_path)*sizeof(char)), command_str, strlen(command_str));
 
         if (find_script_in_file(token) != 0){
             printf("Failed to find script {%s} in script list file\r\n");
@@ -274,12 +347,21 @@ static int command_parser(char *command_str){
         }
 
         ret = system(concat_str);
-
-    } else {
-        // TODO: placeholder
     }
     
 END:
+
+    if (token){
+        free(token);
+        token = NULL;
+    }
+
+    
+    if (concat_str){
+        free(concat_str);
+        concat_str = NULL;
+    }
+    
 
     if (command_str){
         free(command_str_cp);
@@ -298,12 +380,17 @@ static void on_command(IotclEventData data) {
     if (NULL != command) {
         
         printf("received command:\r\n%s\r\n", command);
-        command_parser(command);
+        
+        bool success = command_parser(command) ? true : false;
 
-        //command_status(data, command);
-        free((void *) command);
+        success = !success;
+
+        //printf("success %d %s\r\n", success, success ? "true": "false");
+
+        command_status(data, command, success);
+        free(command);
     } else {
-        command_status(data, "Internal error");
+        command_status(data, "Internal error", false);
     }
 }
 
@@ -370,7 +457,6 @@ static void publish_telemetry(sensors_data_t sensors) {
     iotcl_telemetry_add_with_iso_time(msg, iotcl_iso_timestamp_now());
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
     iotcl_telemetry_set_number(msg, "cpu", 3.123123); // test floating point numbers
-    
 
     for (int i = 0; i < sensors.size; i++){
 
@@ -477,9 +563,9 @@ static void free_sensor_data(sensors_data_t *sensors) {
     printf("freeing sensor data\r\n");
 
     for (int i = 0; i < sensors->size; i++){
-        if (sensors->sensor[i].s_path){
-            free(sensors->sensor[i].s_path);
-            sensors->sensor[i].s_path = NULL;
+        if (sensors->sensor[i].s_name){
+            free(sensors->sensor[i].s_name);
+            sensors->sensor[i].s_name = NULL;
         }
 
         if (sensors->sensor[i].s_path){
@@ -684,10 +770,61 @@ static float read_sensor_raw(sensor_info_t *sensors_data){
     return 0;
 }
 
-static bool string_ends_with(const char * needle, const char* haystack)
-{
+bool string_ends_with(const char * needle, const char* haystack){
     const char *str_end = haystack + strlen(haystack) -  strlen(needle);
     return (strncmp(str_end, needle, strlen(needle) ) == 0);
+}
+
+static int get_commands_path(char* commands_file_path) {
+
+    char* new_str = NULL;
+
+    new_str = strdup(commands_file_path);
+    char* new_str_ptr_bg = &new_str[0];
+
+    int str_len = strlen(new_str);
+
+    int pos = 0;
+
+    for (int i = 0; i < str_len; i++){
+
+        if (*new_str == '/'){
+            pos = i;
+        }
+        new_str+=(sizeof(char));
+    }
+
+    new_str = new_str_ptr_bg;
+
+    for (int i = 0; i < pos+1; i++){
+        new_str+=(sizeof(char));
+    }
+
+    new_str = new_str_ptr_bg;
+
+    local_data.scripts_path = (char*)calloc(pos+2, sizeof(char));
+
+    if (!local_data.scripts_path){
+        printf("failed to calloc.\r\n");
+        free(new_str_ptr_bg);
+        new_str_ptr_bg = NULL;
+        return 1;
+    }
+    
+
+    for (int i = 0; i < pos+1; i++){
+        local_data.scripts_path[i] = *new_str;
+        new_str+=(sizeof(char));
+    }
+    local_data.scripts_path[pos+2] = '\0';
+    printf("fullpath: {%s}\r\n", local_data.scripts_path);
+
+    if (new_str_ptr_bg){
+        free(new_str_ptr_bg);
+        new_str_ptr_bg = NULL;
+    }
+
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -767,58 +904,19 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-
-        char* list_dup = NULL;
-
-        list_dup = strdup(local_data.scripts_list);
-
-
-        char* token = NULL;
-
-        int cnt = 0;
-        for (int i = 0; i < strlen(list_dup); i++){
-            if (list_dup[i] == '/')
-                cnt++;
-        }
-
-        local_data.scripts_path = NULL;
-        
-        token = strtok(list_dup, "/");
-
-        // +2 to create enough space for / at the beginning and end of 1st token
-        local_data.scripts_path = (char*)calloc(strlen(token)+2, sizeof(char));
-        memcpy(local_data.scripts_path, "/", sizeof("/"));
-        size_t data_len = 1;
-
-        for (int i = 0; i < cnt-1; i++){
-            printf("i %d\r\n", i);
-
-            memcpy((char*)local_data.scripts_path+data_len, token, sizeof(char)*strlen(token));
-            data_len += sizeof(char)*strlen(token);
-
-            memcpy((char*)local_data.scripts_path+data_len, "/", sizeof(char)*strlen("/"));
-            data_len += sizeof(char)*strlen("/");
-
-            
-            token = strtok(NULL, "/");
-            if (token){
-            
-                if (strlen(token) > 0){
-                    local_data.scripts_path = (char*)realloc(local_data.scripts_path, (sizeof(char)* ( (strlen(token)+1) + (strlen(local_data.scripts_path)) ) ));
-                }
-            } else {
-                printf("Token is null\r\n");
+        if (get_commands_path(local_data.scripts_list) != 0) {
+            printf("failed to get commands path.\r\n");
+            // TODO: do we need to fail here?
+        } else {
+            if (find_scripts() != 0){
+                printf("Failed to get script names\r\n");
+                // TODO: do we need to fail here?
             }
+
         }
+        
 
-        free(list_dup);
-
-
-        printf("board: %s\r\n", local_data.board_name);
-        if (find_scripts() != 0){
-            printf("FAIL");
-        }
-
+        
         printf("DUID in main: %s\r\n", config->duid);
 
         
@@ -912,12 +1010,15 @@ int main(int argc, char *argv[]) {
             }
         }
         iotconnect_sdk_disconnect();
-    }
 
+    }
+    int ret = 0;
+
+MAIN_END:
     free_iotc_config(config);
 
     free_local_data();
 
-    return 0;
+    return ret;
 }
 
